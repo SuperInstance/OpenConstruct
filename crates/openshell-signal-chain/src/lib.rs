@@ -90,3 +90,8 @@ pub mod spline_connector;
 pub use spline_connector::{
     SplineRoom, SplineChain, SplineEvaluation,
 };
+
+pub mod holonomy_bridge;
+pub use holonomy_bridge::{
+    HolonomyRoom, HolonomyChain, HolonomyStatus, BettiResult,
+};
