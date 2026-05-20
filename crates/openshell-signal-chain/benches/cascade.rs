@@ -94,7 +94,7 @@ fn bench_cascade_from_chain(c: &mut Criterion) {
                         .insert(format!("child-{i}"), Room::new(&format!("child-{i}")));
                 }
                 chain.cascade_from(black_box("root"), black_box(1));
-                black_box(&chain.rooms)
+                black_box(chain.rooms.len())
             });
         });
 }
