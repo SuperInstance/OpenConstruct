@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+[package]
+name = "openshell-constraint-theory"
+version = "0.1.0"
+edition = "2021"
+description = "Wrapper for constraint-theory-ecosystem — 62B checks/sec, formally proven"
+license = "Apache-2.0"
+repository = "https://github.com/SuperInstance/OpenShell"
+[dependencies]
+constraint-theory-ecosystem = { path = "../../vendored/constraint-theory-ecosystem" }
+serde = { version = "1.0", features = ["derive"] }

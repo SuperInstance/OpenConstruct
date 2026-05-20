@@ -1,0 +1,10 @@
+[package]
+name = "fleet-homology"
+version = "0.1.0"
+edition = "2021"
+description = "H1 cohomology cycle space computation for fleet emergence detection. Computes Betti numbers β0, β1, β2 for fleet topology."
+repository = "https://github.com/SuperInstance/fleet-homology"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

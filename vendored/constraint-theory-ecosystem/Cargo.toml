@@ -1,0 +1,11 @@
+[package]
+name = "constraint-theory-ecosystem"
+version = "0.1.0"
+edition = "2021"
+description = "Constraint Theory Ecosystem — 62B checks/sec, formally proven"
+license = "Apache-2.0"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
