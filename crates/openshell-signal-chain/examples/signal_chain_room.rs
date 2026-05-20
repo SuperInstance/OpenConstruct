@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo run --example signal_chain_room -p openshell-signal-chain
 
-use openshell_signal_chain::{Dial, Room, SignalChain, DIAL_ANALYSIS, DIAL_BATHY};
+use openshell_signal_chain::{Dial, Room, SignalChain, DIAL_BATHY};
 
 fn main() {
     println!("=== Signal Chain Room Examples ===\n");
@@ -35,16 +35,16 @@ fn main() {
     let mut chain = SignalChain::new("fishing-expedition");
 
     // Add rooms
-    let mut nav = chain.room("navigation");
+    let nav = chain.room("navigation");
     nav.add_snap(serde_json::json!({"lat": 54.5, "lon": -2.5}), 1.0);
     nav.add_inference(serde_json::json!({"eta": "14:30"}), 0.9);
 
-    let mut catch = chain.room("catch-log");
+    let catch = chain.room("catch-log");
     catch.add_snap(serde_json::json!({"species": "cod", "weight": 45.0}), 1.0);
     catch.add_inference(serde_json::json!({"next_bite": "20 min"}), 0.5);
 
     // Room with custom dial
-    let mut weather = chain.room_with_dial("weather", Dial::new(0.3));
+    let weather = chain.room_with_dial("weather", Dial::new(0.3));
     weather.add_snap(serde_json::json!({"wind_knots": 15}), 1.0);
     weather.add_inference(serde_json::json!({"storm": "warning"}), 0.8);
 
@@ -72,8 +72,8 @@ fn main() {
     // 5. Cascade demonstration
     println!("\n--- 5. Cascade ---");
     let mut parent = Room::new("analysis-root");
-    let mut child_a = Room::new("child-a");
-    let mut child_b = Room::new("child-b");
+    let child_a = Room::new("child-a");
+    let child_b = Room::new("child-b");
 
     // Add high-confidence inference to parent
     parent.add_inference(serde_json::json!({"hypothesis": "pattern-detected"}), 0.85);
