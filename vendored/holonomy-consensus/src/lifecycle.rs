@@ -10,7 +10,6 @@
 //! it started. Lifecycle measures whether a claim is still active.
 
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 
 /// The lifecycle state of a trust tile.
 ///

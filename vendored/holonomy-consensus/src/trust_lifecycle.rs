@@ -139,7 +139,7 @@ impl TrustPool {
     }
 
     /// Add a trust tile to the pool. Returns the cycle_id.
-    pub fn add(&mut self, mut tile: TrustTile) -> u64 {
+    pub fn add(&mut self, tile: TrustTile) -> u64 {
         let id = tile.cycle_id;
         if id >= self.next_cycle_id {
             self.next_cycle_id = id + 1;
