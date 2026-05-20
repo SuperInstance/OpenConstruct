@@ -78,7 +78,7 @@ impl Complex {
 
                 while let Some(current) = queue.pop() {
                     component.push(current);
-                    for (j, edge) in self.edges.iter().enumerate() {
+                    for (_j, edge) in self.edges.iter().enumerate() {
                         if !visited[self.vertices.iter().position(|Vertex(x)| *x == edge.0).unwrap()] {
                             continue;
                         }
@@ -212,7 +212,7 @@ impl HomologyReport {
 /// Returns a basis of independent cycles for computing holonomy sums
 pub fn cycle_basis(complex: &Complex) -> Vec<Vec<(u64, u64)>> {
     // Simple cycle basis: for each edge that creates a cycle, extract the cycle
-    let mut basis: Vec<Vec<(u64, u64)>> = Vec::new();
+    let _basis: Vec<Vec<(u64, u64)>> = Vec::new();
     let verts: Vec<u64> = complex.vertices.iter().map(|Vertex(v)| *v).collect();
     let edges = &complex.edges;
 
