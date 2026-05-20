@@ -8,9 +8,76 @@
 
 OpenShell is the safe, private runtime for autonomous AI agents. It provides sandboxed execution environments that protect your data, credentials, and infrastructure — governed by declarative YAML policies that prevent unauthorized file access, data exfiltration, and uncontrolled network activity.
 
-OpenShell is built agent-first. The project ships with agent skills for everything from gateway troubleshooting to policy generation, and we expect contributors to use them.
-
 > **Alpha software — single-player mode.** OpenShell is proof-of-life: one developer, one environment, one gateway. We are building toward multi-tenant enterprise deployments, but the starting point is getting your own environment up and running. Expect rough edges. Bring your agent.
+
+## The Signal Chain
+
+This fork of OpenShell includes the **signal-chain** crate, which provides spatial awareness for agents. The core insight:
+
+Every intelligent system needs a way to control the ratio of hard constraints vs. soft inference. OpenShell sandboxes already enforce hard constraints (filesystem, network, process). The signal chain adds explicit control over the inference layer.
+
+### The Dial
+
+A dial controls where a room sits on the hard-to-soft spectrum:
+
+```
+0.0 ████████████████████ 1.0
+    hard ←─────────────→ soft
+```
+
+- **0.0** = deterministic, provable, certifiable. Theorem provers, FLUX ISA verification, policy enforcement.
+- **1.0** = probabilistic, generative, exploratory. Creative fill, hypothesis generation.
+
+The dial is continuous. A room at 0.4 is mostly hard with some inference allowed. A room at 0.7 allows more extrapolation but still anchors to snaps.
+
+### Snaps and Inferences
+
+A **snap** is a hard-locked fact. Confidence = 1.0 means absolute ground truth. Once locked, snaps constrain all downstream inference.
+
+An **inference** is a soft extrapolation with its own confidence. Inferences can be elevated to snaps when verified.
+
+```rust
+use openshell_signal_chain::{Dial, Room, SignalChain, DIAL_FORMAL, DIAL_ANALYSIS};
+
+// A room at analysis level (0.4)
+let mut chain = SignalChain::new("fleet");
+let room = chain.room("drone-salvage");
+
+// Snap: bathydata from sonar (hard fact)
+room.add_snap(serde_json::json!({
+    "lat": 45.3, "lon": -122.8, "depth": 87.2, "material": "sediment"
+}), 1.0);
+
+// Inference: possible wreckage at coordinates (soft, needs verification)
+room.add_inference(
+    serde_json::json!({"hypothesis": "anchor at 45.5, -123.0"}),
+    0.7
+);
+
+// Query at formal level: snaps only
+let hard_facts = room.query(DIAL_FORMAL);
+
+// Query at analysis level: snaps + confident inferences
+let analysis = room.query(DIAL_ANALYSIS);
+
+// Query at exploratory level: all inferences
+let extrapolated = room.query(Dial::soft());
+```
+
+### Rooms as Spatial Anchors
+
+Every sandbox is a room. Each room has:
+- A dial position (default from global, overridable per room)
+- Snaps (hard constraints from policy, filesystem rules, credential bounds)
+- Inferences (accumulated knowledge, observations, extrapolations)
+
+The PLATO tile system provides the spatial graph. Rooms connect to neighboring rooms. Agents navigate the graph by querying at different dial levels.
+
+### Cascade
+
+Inferences can cascade through child rooms. Top inferences from a parent room propagate as snaps to children — the ideas flow through the chain, snapping at each level.
+
+This models how real knowledge works: a hypothesis becomes an anchor for the next level of reasoning.
 
 ## Quickstart
 
@@ -114,6 +181,16 @@ OpenShell isolates each sandbox in its own container with policy-enforced egress
 
 OpenShell runs a gateway control plane that manages sandbox lifecycle through a configured compute driver. Supported compute platforms include Docker, Podman, MicroVM, and Kubernetes.
 
+### Signal Chain Integration
+
+The `openshell-signal-chain` crate adds the inference dial layer:
+
+- **Sandbox = Room**: Each sandbox has snaps (hard policy constraints) and inferences (accumulated knowledge)
+- **Router query at dial**: Inference routing can query at different dial levels — formal for policy, exploratory for creative tasks
+- **Prover = DIAL_FORMAL**: Policy verification uses hard (0.0) dial — theorem-proving level constraints
+
+This makes OpenShell's sandbox not just isolated, but **spatially aware**: agents know where they are in the constraint space, what's been established as fact, and how far they can extrapolate.
+
 ## Protection Layers
 
 OpenShell applies defense in depth across four policy domains:
@@ -122,7 +199,7 @@ OpenShell applies defense in depth across four policy domains:
 | ---------- | --------------------------------------------------- | --------------------------- |
 | Filesystem | Prevents reads/writes outside allowed paths.        | Locked at sandbox creation. |
 | Network    | Blocks unauthorized outbound connections.           | Hot-reloadable at runtime.  |
-| Process    | Blocks privilege escalation and dangerous syscalls. | Locked at sandbox creation. |
+| Process    | Blocks privilege escalation and dangerous syscalls.  | Locked at sandbox creation. |
 | Inference  | Reroutes model API calls to controlled backends.    | Hot-reloadable at runtime.  |
 
 Policies are declarative YAML files. Static sections (filesystem, process) are locked at creation; dynamic sections (network, inference) can be hot-reloaded on a running sandbox with `openshell policy set`.
@@ -151,7 +228,7 @@ Docker-backed GPU sandboxes auto-select CDI when available and otherwise fall ba
 | ------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | [`base`](https://github.com/NVIDIA/OpenShell-Community/tree/main/sandboxes/base) | Works out of the box. Provider uses `ANTHROPIC_API_KEY`.                      |
 | [OpenCode](https://opencode.ai/)                              | [`base`](https://github.com/NVIDIA/OpenShell-Community/tree/main/sandboxes/base) | Works out of the box. Provider uses `OPENAI_API_KEY` or `OPENROUTER_API_KEY`. |
-| [Codex](https://developers.openai.com/codex)                  | [`base`](https://github.com/NVIDIA/OpenShell-Community/tree/main/sandboxes/base) | Works out of the box. Provider uses `OPENAI_API_KEY`.                         |
+| [Codex](https://developers.openai.com/codex)                   | [`base`](https://github.com/NVIDIA/OpenShell-Community/tree/main/sandboxes/base) | Works out of the box. Provider uses `OPENAI_API_KEY`.                         |
 | [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) | [`base`](https://github.com/NVIDIA/OpenShell-Community/tree/main/sandboxes/base) | Works out of the box. Provider uses `GITHUB_TOKEN` or `COPILOT_GITHUB_TOKEN`. |
 | [OpenClaw](https://openclaw.ai/)                              | [Community](https://github.com/NVIDIA/OpenShell-Community)                       | Launch with `openshell sandbox create --from openclaw`.                       |
 | [Ollama](https://ollama.com/)                                 | [Community](https://github.com/NVIDIA/OpenShell-Community)                       | Launch with `openshell sandbox create --from ollama`.                         |
@@ -168,7 +245,7 @@ Docker-backed GPU sandboxes auto-select CDI when available and otherwise fall ba
 | `openshell policy get <name>`                              | Show the active policy.                         |
 | `openshell inference set --provider <p> --model <m>`       | Configure the `inference.local` endpoint.       |
 | `openshell logs [name] --tail`                             | Stream sandbox logs.                            |
-| `openshell term`                                           | Launch the real-time terminal UI for debugging. |
+| `openshell term`                                           | Launch the real-time terminal UI for debugging.  |
 
 See the [full documentation](https://docs.nvidia.com/openshell/latest) for command guides, tutorials, and reference material.
 

@@ -9,7 +9,7 @@ pub use backend::{
     ProxyResponse, StreamingProxyResponse, ValidatedEndpoint, ValidationFailure,
     ValidationFailureKind, verify_backend_endpoint,
 };
-use config::{ResolvedRoute, RouterConfig};
+use config::{InferenceLevel, ResolvedRoute, RouterConfig};
 use std::time::Duration;
 use tracing::info;
 
@@ -58,6 +58,9 @@ impl Router {
     ///
     /// Filters candidates by `source_protocol` compatibility (exact match against
     /// one of the route's `protocols`), then forwards to the first match.
+    ///
+    /// The `inference_level` parameter is stored in the request context for use
+    /// by signal-chain aware backends. If not provided, defaults to `Review` (0.5).
     pub async fn proxy_with_candidates(
         &self,
         source_protocol: &str,
@@ -67,10 +70,36 @@ impl Router {
         body: bytes::Bytes,
         candidates: &[ResolvedRoute],
     ) -> Result<ProxyResponse, RouterError> {
+        self.proxy_with_candidates_at_level(source_protocol, method, path, headers, body, candidates, InferenceLevel::Review).await
+    }
+
+    /// Proxy a raw HTTP request with a specific inference level.
+    ///
+    /// The inference level controls signal-chain dial position (0.0=formal to 1.0=creative),
+    /// allowing the router to select routes optimized for different reasoning modes.
+    ///
+    /// Routes are filtered by:
+    /// 1. Protocol compatibility (source_protocol must match route protocols)
+    /// 2. Inference level (route's level must match the requested level)
+    pub async fn proxy_with_candidates_at_level(
+        &self,
+        source_protocol: &str,
+        method: &str,
+        path: &str,
+        headers: Vec<(String, String)>,
+        body: bytes::Bytes,
+        candidates: &[ResolvedRoute],
+        inference_level: InferenceLevel,
+    ) -> Result<ProxyResponse, RouterError> {
         let normalized_source = source_protocol.trim().to_ascii_lowercase();
+
+        // Filter by protocol AND inference level
         let route = candidates
             .iter()
-            .find(|r| r.protocols.iter().any(|p| p == &normalized_source))
+            .find(|r| {
+                r.protocols.iter().any(|p| p == &normalized_source)
+                    && r.inference_level == inference_level
+            })
             .ok_or_else(|| RouterError::NoCompatibleRoute(source_protocol.to_string()))?;
 
         info!(
@@ -78,8 +107,11 @@ impl Router {
             endpoint = %route.endpoint,
             method = %method,
             path = %path,
-            "routing proxy inference request"
+            inference_level = ?inference_level,
+            dial_position = inference_level.dial_position(),
+            "routing proxy inference request at inference level"
         );
+
 
         if mock::is_mock_route(route) {
             info!(endpoint = %route.endpoint, "returning mock response");
@@ -98,10 +130,7 @@ impl Router {
         .await
     }
 
-    /// Streaming variant of [`proxy_with_candidates`](Self::proxy_with_candidates).
-    ///
-    /// Returns response headers immediately without buffering the body.
-    /// The caller streams body chunks via [`StreamingProxyResponse::response`].
+    /// Streaming variant of [`proxy_with_candidates_at_level`](Self::proxy_with_candidates_at_level).
     pub async fn proxy_with_candidates_streaming(
         &self,
         source_protocol: &str,
@@ -111,18 +140,39 @@ impl Router {
         body: bytes::Bytes,
         candidates: &[ResolvedRoute],
     ) -> Result<StreamingProxyResponse, RouterError> {
+        self.proxy_with_candidates_streaming_at_level(source_protocol, method, path, headers, body, candidates, InferenceLevel::Review).await
+    }
+
+    /// Proxy with streaming and a specific inference level.
+    pub async fn proxy_with_candidates_streaming_at_level(
+        &self,
+        source_protocol: &str,
+        method: &str,
+        path: &str,
+        headers: Vec<(String, String)>,
+        body: bytes::Bytes,
+        candidates: &[ResolvedRoute],
+        inference_level: InferenceLevel,
+    ) -> Result<StreamingProxyResponse, RouterError> {
         let normalized_source = source_protocol.trim().to_ascii_lowercase();
+
         let route = candidates
             .iter()
-            .find(|r| r.protocols.iter().any(|p| p == &normalized_source))
+            .find(|r| {
+                r.protocols.iter().any(|p| p == &normalized_source)
+                    && r.inference_level == inference_level
+            })
             .ok_or_else(|| RouterError::NoCompatibleRoute(source_protocol.to_string()))?;
+
 
         info!(
             protocols = %route.protocols.join(","),
             endpoint = %route.endpoint,
             method = %method,
             path = %path,
-            "routing proxy inference request (streaming)"
+            inference_level = ?inference_level,
+            dial_position = inference_level.dial_position(),
+            "routing proxy inference request (streaming) at inference level"
         );
 
         if mock::is_mock_route(route) {
