@@ -1,0 +1,21 @@
+[package]
+name = "flux-vm-v3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sha2 = "0.10"
+rayon = "1.8"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "flux_bench"
+harness = false
+path = "benches/flux_bench.rs"
+
+[[bench]]
+name = "real_world_bench"
+harness = false
+path = "benches/real_world_bench.rs"

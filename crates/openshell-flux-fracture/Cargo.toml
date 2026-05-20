@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+[package]
+name = "openshell-flux-fracture"
+version = "0.1.0"
+edition = "2021"
+description = "Wrapper for flux-fracture — BFS fracture + bitwise OR coalescence"
+license = "MIT"
+repository = "https://github.com/SuperInstance/OpenShell"
+[dependencies]
+flux-fracture = { path = "../../vendored/flux-fracture" }
+serde = { version = "1.0", features = ["derive"] }

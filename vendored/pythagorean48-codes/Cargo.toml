@@ -1,0 +1,13 @@
+[package]
+name = "pythagorean48-codes"
+version = "0.1.0"
+edition = "2021"
+description = "Shared 48-direction trust encoding for SuperInstance fleet agents"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/SuperInstance/pythagorean48-codes"
+keywords = ["trust", "encoding", "fleet", "48-direction", "consensus"]
+categories = ["algorithms", "mathematics"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

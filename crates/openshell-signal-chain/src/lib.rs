@@ -80,3 +80,18 @@ pub use dial::DIAL_REVIEW;
 pub use dial::DIAL_EXTRAPOLATE;
 pub use dial::DIAL_CREATIVE;
 pub use dial::DIAL_EXPLORATORY;
+
+pub mod constraint;
+pub use constraint::{
+    SplineConstraint, SplineResult, ConstraintViolation, ViolationSeverity,
+    evaluate_spline, maritime_spline,
+};
+pub mod spline_connector;
+pub use spline_connector::{
+    SplineRoom, SplineChain, SplineEvaluation,
+};
+
+pub mod holonomy_bridge;
+pub use holonomy_bridge::{
+    HolonomyRoom, HolonomyChain, HolonomyStatus, BettiResult,
+};

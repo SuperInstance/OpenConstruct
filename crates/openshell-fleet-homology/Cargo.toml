@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+[package]
+name = "openshell-fleet-homology"
+version = "0.1.0"
+edition = "2021"
+description = "Wrapper for fleet-homology — H1 cohomology for fleet knowledge graphs"
+license = "Apache-2.0"
+repository = "https://github.com/SuperInstance/OpenShell"
+[dependencies]
+fleet-homology = { path = "../../vendored/fleet-homology" }
+serde = { version = "1.0", features = ["derive"] }

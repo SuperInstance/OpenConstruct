@@ -941,6 +941,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d52eff69cd5e647efe296129160853a42795992097e8af39800e1060caeea9b"
 
 [[package]]
+name = "constraint-theory-ecosystem"
+version = "0.1.0"
+
+[[package]]
 name = "core-foundation"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1671,6 +1675,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "fleet-homology"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "flume"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1679,6 +1690,22 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "spin",
+]
+
+[[package]]
+name = "flux-fracture"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "flux-vm-v3"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "rayon",
+ "sha2 0.10.9",
 ]
 
 [[package]]
@@ -2092,6 +2119,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest 0.10.7",
+]
+
+[[package]]
+name = "holonomy-consensus"
+version = "0.2.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -3581,6 +3615,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "openshell-constraint-theory"
+version = "0.1.0"
+dependencies = [
+ "constraint-theory-ecosystem",
+ "serde",
+]
+
+[[package]]
 name = "openshell-core"
 version = "0.0.0"
 dependencies = [
@@ -3694,6 +3736,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "openshell-fleet-homology"
+version = "0.1.0"
+dependencies = [
+ "fleet-homology",
+ "serde",
+]
+
+[[package]]
+name = "openshell-flux-fracture"
+version = "0.1.0"
+dependencies = [
+ "flux-fracture",
+ "serde",
+]
+
+[[package]]
+name = "openshell-flux-vm"
+version = "0.1.0"
+dependencies = [
+ "flux-vm-v3",
+ "serde",
+]
+
+[[package]]
+name = "openshell-holonomy-consensus"
+version = "0.1.0"
+dependencies = [
+ "holonomy-consensus",
+ "serde",
+]
+
+[[package]]
 name = "openshell-ocsf"
 version = "0.0.0"
 dependencies = [
@@ -3738,6 +3812,14 @@ dependencies = [
  "serde_json",
  "serde_yml",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "openshell-pythagorean48"
+version = "0.1.0"
+dependencies = [
+ "pythagorean48-codes",
+ "serde",
 ]
 
 [[package]]
@@ -4478,6 +4560,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7ac8852baeb3cc6fb83b93646fb93c0ffe5d14bf138c945ceb4b9948ee0e3c1"
 dependencies = [
  "autotools",
+]
+
+[[package]]
+name = "pythagorean48-codes"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

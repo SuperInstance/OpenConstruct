@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+[package]
+name = "openshell-pythagorean48"
+version = "0.1.0"
+edition = "2021"
+description = "Wrapper for pythagorean48-codes — 48-dir trust encoding"
+license = "Apache-2.0"
+repository = "https://github.com/SuperInstance/OpenShell"
+[dependencies]
+pythagorean48-codes = { path = "../../vendored/pythagorean48-codes" }
+serde = { version = "1.0", features = ["derive"] }
