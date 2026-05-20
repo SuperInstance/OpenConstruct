@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Z3 constraint model encoding policy, credentials, and binary capabilities.
+//!
+//! Uses signal-chain `Dial` for inference level control. Formal verification
+//! uses `DIAL_FORMAL` (position 0.0) to ensure pure algorithmic reasoning.
 
 use std::collections::{HashMap, HashSet};
 
@@ -11,6 +14,7 @@ use z3::{Context, SatResult, Solver};
 use crate::credentials::CredentialSet;
 use crate::policy::{PolicyModel, WRITE_METHODS};
 use crate::registry::BinaryRegistry;
+use openshell_signal_chain::{Dial, DIAL_FORMAL};
 
 /// Unique identifier for a network endpoint in the model.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -53,14 +57,37 @@ pub struct ReachabilityModel {
     credential_has_destructive: HashMap<String, Bool>,
     #[allow(dead_code)]
     filesystem_readable: HashMap<String, Bool>,
+
+
+    /// Signal-chain dial position for this model (0.0=formal to 1.0=creative)
+    /// Formal verification uses DIAL_FORMAL (0.0) for pure algorithmic reasoning
+    pub dial: Dial,
 }
 
 impl ReachabilityModel {
     /// Build a new reachability model from the given inputs.
+    ///
+    /// Uses `DIAL_FORMAL` (position 0.0) by default for pure formal verification.
+    /// This ensures theorem-prover style rigor: no probabilistic inference,
+    /// only hard logical constraints from snaps.
     pub fn new(
         policy: PolicyModel,
         credentials: CredentialSet,
         binary_registry: BinaryRegistry,
+    ) -> Self {
+        Self::with_dial(policy, credentials, binary_registry, DIAL_FORMAL)
+    }
+
+    /// Build a new reachability model with a specific inference level.
+    ///
+    /// The `dial` parameter controls the balance between:
+    /// - Hard snaps (position 0.0): pure logical constraints, theorem-prover style
+    /// - Soft inferences (position 1.0): probabilistic reasoning, hypothesis generation
+    pub fn with_dial(
+        policy: PolicyModel,
+        credentials: CredentialSet,
+        binary_registry: BinaryRegistry,
+        dial: Dial,
     ) -> Self {
         let solver = Solver::new();
         let mut model = Self {
@@ -80,9 +107,15 @@ impl ReachabilityModel {
             credential_has_write: HashMap::new(),
             credential_has_destructive: HashMap::new(),
             filesystem_readable: HashMap::new(),
+            dial,
         };
         model.build();
         model
+    }
+
+    /// Get the signal-chain dial position for this model.
+    pub fn dial_position(&self) -> f64 {
+        self.dial.position
     }
 
     fn build(&mut self) {

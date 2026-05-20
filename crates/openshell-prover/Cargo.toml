@@ -21,6 +21,7 @@ miette = { workspace = true }
 owo-colors = { workspace = true }
 include_dir = { workspace = true }
 glob = { workspace = true }
+openshell-signal-chain = { path = "../openshell-signal-chain" }
 
 [lints]
 workspace = true

@@ -11,6 +11,68 @@ use crate::RouterError;
 
 pub const DEFAULT_ROUTE_TIMEOUT: Duration = Duration::from_secs(60);
 
+/// Inference level for routing decisions.
+///
+/// Controls how the router selects and queries inference endpoints.
+/// Maps to signal-chain dial positions for multi-level inference.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+pub enum InferenceLevel {
+    /// Pure formal reasoning — theorem provers, FLUX ISA, H1 cohomology
+    /// Dial position: 0.0
+    Formal,
+    /// Hard bathydata — sonar readings, coordinates, depth facts
+    /// Dial position: 0.1
+    Bathy,
+    /// Git history, build logs, certifiable traces
+    /// Dial position: 0.05
+    Commit,
+    /// Reasoning with snaps as anchors
+    /// Dial position: 0.4
+    Analysis,
+    /// Equal weight to algorithm and inference
+    /// Dial position: 0.5
+    Review,
+    /// Hypothesis generation, creative fill
+    /// Dial position: 0.7
+    Extrapolate,
+    /// Story generation, game narrative
+    /// Dial position: 0.9
+    Creative,
+    /// Pure inference, no snap constraints
+    /// Dial position: 1.0
+    Exploratory,
+}
+
+impl InferenceLevel {
+    /// Convert to dial position (0.0 hard to 1.0 soft)
+    pub fn dial_position(&self) -> f64 {
+        match self {
+            InferenceLevel::Formal => 0.0,
+            InferenceLevel::Bathy => 0.1,
+            InferenceLevel::Commit => 0.05,
+            InferenceLevel::Analysis => 0.4,
+            InferenceLevel::Review => 0.5,
+            InferenceLevel::Extrapolate => 0.7,
+            InferenceLevel::Creative => 0.9,
+            InferenceLevel::Exploratory => 1.0,
+        }
+    }
+
+    /// Get the corresponding signal-chain dial preset name
+    pub fn dial_name(&self) -> &'static str {
+        match self {
+            InferenceLevel::Formal => "DIAL_FORMAL",
+            InferenceLevel::Bathy => "DIAL_BATHY",
+            InferenceLevel::Commit => "DIAL_COMMIT",
+            InferenceLevel::Analysis => "DIAL_ANALYSIS",
+            InferenceLevel::Review => "DIAL_REVIEW",
+            InferenceLevel::Extrapolate => "DIAL_EXTRAPOLATE",
+            InferenceLevel::Creative => "DIAL_CREATIVE",
+            InferenceLevel::Exploratory => "DIAL_EXPLORATORY",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct RouterConfig {
     pub routes: Vec<RouteConfig>,
@@ -29,6 +91,9 @@ pub struct RouteConfig {
     pub api_key: Option<String>,
     #[serde(default)]
     pub api_key_env: Option<String>,
+    /// Inference level for this route (controls dial position in signal-chain)
+    #[serde(default)]
+    pub inference_level: Option<InferenceLevel>,
 }
 
 /// A fully-resolved route ready for the router to forward requests.
@@ -52,6 +117,8 @@ pub struct ResolvedRoute {
     pub passthrough_headers: Vec<String>,
     /// Per-request timeout for proxied inference calls.
     pub timeout: Duration,
+    /// Inference level for this route (signal-chain dial position as 0.0-1.0)
+    pub inference_level: InferenceLevel,
 }
 
 impl std::fmt::Debug for ResolvedRoute {
@@ -141,6 +208,7 @@ impl RouteConfig {
             default_headers,
             passthrough_headers,
             timeout: DEFAULT_ROUTE_TIMEOUT,
+            inference_level: self.inference_level.unwrap_or(InferenceLevel::Review),
         })
     }
 }
@@ -274,6 +342,7 @@ routes:
             default_headers: Vec::new(),
             passthrough_headers: Vec::new(),
             timeout: DEFAULT_ROUTE_TIMEOUT,
+            inference_level: InferenceLevel::Review,
         };
         let debug_output = format!("{route:?}");
         assert!(
