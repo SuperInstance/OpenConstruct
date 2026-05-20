@@ -21,10 +21,10 @@ fn bench_dial(c: &mut Criterion) {
 
 fn bench_spline(c: &mut Criterion) {
     let mut g = c.benchmark_group("SplineConstraint");
-    let wave = SplineConstraint::new("wave_height_dm", 0, 127, "lo_curv", 1.5, 1.5, 3.0);
+    let wave = SplineConstraint::new(0, 127, "wave_height_dm", 1.5, 1.5, 3.0);
     for val in [10_i32, 35, 60, 90, 120] {
         g.bench_with_input(BenchmarkId::from_parameter(val), &val, |b, &v| {
-            b.iter(|| { let d = wave.curvature_distance(*v); black_box(d); });
+            b.iter(|| { let d = wave.curvature_distance(v); black_box(d); });
         });
     }
     g.bench_function("maritime_preset", |b| b.iter(|| {
@@ -46,7 +46,7 @@ fn bench_room(c: &mut Criterion) {
     };
     for d in [0.0, 0.3, 0.6, 1.0] {
         g.bench_with_input(BenchmarkId::from_parameter(d), &d, |b, &p| {
-            b.iter(|| { let res = room.query(Dial::new(*p)); black_box(res); });
+            b.iter(|| { let res = room.query(Dial::new(p)); black_box(res); });
         });
     }
     g.finish();
@@ -55,8 +55,8 @@ fn bench_room(c: &mut Criterion) {
 fn bench_holonomy(c: &mut Criterion) {
     let mut g = c.benchmark_group("HolonomyRoom");
     let cases = vec![(3,3),(5,7),(10,17),(20,37),(4,10),(10,30)];
-    for (v,e) in &cases {
-        g.bench_with_input(BenchmarkId::new("betti", format!("V{}E{}",v,e)), &(*v,*e), |b,&(v,e)| {
+    for &(v, e) in &cases {
+        g.bench_with_input(BenchmarkId::new("betti", format!("V{}E{}",v,e)), &(v, e), |b, &(v, e)| {
             b.iter(|| {
                 let mut r = HolonomyRoom::new("b", Dial::hard());
                 for _ in 0..v { r.add_snap(); }
@@ -84,7 +84,7 @@ fn bench_chain(c: &mut Criterion) {
     };
     for d in [0.0, 0.5, 1.0] {
         g.bench_with_input(BenchmarkId::from_parameter(d), &d, |b,&p| {
-            b.iter(|| { black_box(chain.query_all(Dial::new(*p))); });
+            b.iter(|| { black_box(chain.query_all(Dial::new(p))); });
         });
     }
     g.bench_function("traverse", |b| b.iter(|| { black_box(chain.traverse(&["nav","sonar","weather","analysis"])); }));

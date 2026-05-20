@@ -95,3 +95,7 @@ pub mod holonomy_bridge;
 pub use holonomy_bridge::{
     HolonomyRoom, HolonomyChain, HolonomyStatus, BettiResult,
 };
+
+pub mod flux_vm_bridge;
+pub use flux_vm_bridge::FluxVmBridge;
+
