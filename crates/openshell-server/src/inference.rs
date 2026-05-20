@@ -300,6 +300,7 @@ fn resolve_provider_route(provider: &Provider) -> Result<ResolvedProviderRoute, 
                 .map(|name| (*name).to_string())
                 .collect(),
             timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+            inference_level: openshell_router::config::InferenceLevel::Review,
         },
     })
 }
