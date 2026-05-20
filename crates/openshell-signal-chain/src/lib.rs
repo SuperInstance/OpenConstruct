@@ -80,3 +80,9 @@ pub use dial::DIAL_REVIEW;
 pub use dial::DIAL_EXTRAPOLATE;
 pub use dial::DIAL_CREATIVE;
 pub use dial::DIAL_EXPLORATORY;
+
+pub mod constraint;
+pub use constraint::{
+    SplineConstraint, SplineResult, ConstraintViolation, ViolationSeverity,
+    evaluate_spline, maritime_spline,
+};
