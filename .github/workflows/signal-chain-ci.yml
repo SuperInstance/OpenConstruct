@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Signal Chain CI
+
+on:
+  push:
+    branches:
+      - signal-chain-integration
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  ci:
+    name: ${{ matrix.job }} @ ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            job: test-ubuntu
+          - os: macos-latest
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            job: test-macos
+          - os: windows-latest
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            job: test-windows
+          - os: ubuntu-latest
+            runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            job: test-arm64
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure Rust
+        run: |
+          rustup target add "${{ matrix.target }}" 2>/dev/null || true
+          rustup show
+
+      - name: cargo check
+        run: cargo check -p openshell-signal-chain --target "${{ matrix.target }}"
+
+      - name: cargo test
+        run: cargo test -p openshell-signal-chain --target "${{ matrix.target }}"
+
+      - name: cargo test (all features)
+        run: cargo test -p openshell-signal-chain --all-features --target "${{ matrix.target }}"
+
+      - name: cargo clippy
+        run: cargo clippy -p openshell-signal-chain --target "${{ matrix.target }}" -- -D warnings
