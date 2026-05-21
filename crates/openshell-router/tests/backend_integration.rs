@@ -17,6 +17,7 @@ fn mock_candidates(base_url: &str) -> Vec<ResolvedRoute> {
         default_headers: Vec::new(),
         passthrough_headers: vec!["openai-organization".to_string(), "x-model-id".to_string()],
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }]
 }
 
@@ -121,6 +122,7 @@ async fn proxy_no_compatible_route_returns_error() {
         default_headers: Vec::new(),
         passthrough_headers: Vec::new(),
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let err = router
@@ -217,6 +219,7 @@ async fn proxy_mock_route_returns_canned_response() {
         default_headers: Vec::new(),
         passthrough_headers: Vec::new(),
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let body = serde_json::to_vec(&serde_json::json!({
@@ -356,6 +359,7 @@ async fn proxy_uses_x_api_key_for_anthropic_route() {
             "anthropic-beta".to_string(),
         ],
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let body = serde_json::to_vec(&serde_json::json!({
@@ -419,6 +423,7 @@ async fn proxy_anthropic_does_not_send_bearer_auth() {
             "anthropic-beta".to_string(),
         ],
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let response = router
@@ -468,6 +473,7 @@ async fn proxy_forwards_client_anthropic_version_header() {
             "anthropic-beta".to_string(),
         ],
         timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let body = serde_json::to_vec(&serde_json::json!({
@@ -511,6 +517,7 @@ fn config_resolves_routes_with_protocol() {
             protocols: vec!["openai_chat_completions".to_string()],
             api_key: Some("key".to_string()),
             api_key_env: None,
+            inference_level: None,
         }],
     };
     let routes = config.resolve_routes().unwrap();
@@ -561,6 +568,7 @@ async fn streaming_proxy_completes_despite_exceeding_route_timeout() {
         // Route timeout shorter than the backend delay — streaming must
         // NOT be constrained by this.
         timeout: Duration::from_secs(1),
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let body = serde_json::to_vec(&serde_json::json!({
@@ -623,6 +631,7 @@ async fn buffered_proxy_enforces_route_timeout() {
         default_headers: Vec::new(),
         passthrough_headers: Vec::new(),
         timeout: Duration::from_secs(1),
+        inference_level: openshell_router::config::InferenceLevel::Review,
     }];
 
     let body = serde_json::to_vec(&serde_json::json!({

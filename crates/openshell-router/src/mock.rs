@@ -133,6 +133,7 @@ mod tests {
             default_headers: Vec::new(),
             passthrough_headers: Vec::new(),
             timeout: crate::config::DEFAULT_ROUTE_TIMEOUT,
+            inference_level: crate::config::InferenceLevel::Review,
         }
     }
 

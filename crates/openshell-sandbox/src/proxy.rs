@@ -4966,6 +4966,7 @@ network_policies:
                     "x-model-id".to_string(),
                 ],
                 timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+                inference_level: openshell_router::config::InferenceLevel::Review,
             }],
             vec![],
         );
@@ -5022,6 +5023,7 @@ network_policies:
             default_headers: vec![],
             passthrough_headers: vec![],
             timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+            inference_level: openshell_router::config::InferenceLevel::Review,
         }
     }
 

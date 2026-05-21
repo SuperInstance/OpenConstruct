@@ -209,6 +209,7 @@ mod tests {
                 protocols: vec!["openai_chat_completions".to_string()],
                 api_key: Some("test-key".to_string()),
                 api_key_env: None,
+                inference_level: None,
             }],
         }
     }
@@ -231,6 +232,7 @@ mod tests {
                 protocols: vec!["openai_chat_completions".to_string()],
                 api_key: None,
                 api_key_env: None,
+                inference_level: None,
             }],
         };
         let err = Router::from_config(&config).unwrap_err();

@@ -2683,7 +2683,6 @@ mod tests {
         );
         assert_eq!(
             routes[0].timeout,
-                inference_level: openshell_router::config::InferenceLevel::Review,
             openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
             "timeout_secs=0 should map to default"
         );
@@ -2694,7 +2693,6 @@ mod tests {
         );
         assert_eq!(
             routes[1].timeout,
-                inference_level: openshell_router::config::InferenceLevel::Review,
             Duration::from_secs(120),
             "timeout_secs=120 should map to 120s"
         );
@@ -2745,6 +2743,7 @@ mod tests {
                 default_headers: vec![],
                 passthrough_headers: vec![],
                 timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+                inference_level: openshell_router::config::InferenceLevel::Review,
             },
             openshell_router::config::ResolvedRoute {
                 name: "sandbox-system".to_string(),
@@ -2756,6 +2755,7 @@ mod tests {
                 default_headers: vec![],
                 passthrough_headers: vec![],
                 timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+                inference_level: openshell_router::config::InferenceLevel::Review,
             },
         ];
 
@@ -3046,6 +3046,7 @@ filesystem_policy:
             default_headers: vec![],
             passthrough_headers: vec![],
             timeout: openshell_router::config::DEFAULT_ROUTE_TIMEOUT,
+            inference_level: openshell_router::config::InferenceLevel::Review,
         }];
 
         let cache = Arc::new(RwLock::new(routes));
