@@ -6,11 +6,13 @@
 curl -fsSL https://raw.githubusercontent.com/SuperInstance/OpenConstruct/main/install.sh | bash
 ```
 
-## What It Does
+## What This Gives You
 
 - **One-command install** — Rust, Python, Node, and the OpenConstruct CLI, all set up automatically
-- **5-phase onboarding wizard** — Identity, Senses, Fleet, Tick Board, Build — go from zero to a working agent
+- **5-phase onboarding wizard** — Identity → Senses → Fleet → Tick Board → Build — go from zero to a working agent in minutes
 - **Multi-language SDK** — Use OpenConstruct from Rust, Python, or Node.js with a shared C ABI core
+- **40+ sense modules** — vision, sonar, manus (manipulation), browser, desktop, voice — pick what you need
+- **Fleet discovery** — find and collaborate with other agents on the network, from ESP32 to cloud
 
 ## Quickstart
 
@@ -71,15 +73,21 @@ make install
 | `make abi` | Build the C shared library |
 | `make clean` | Clean build artifacts |
 
+## How It Fits
+
+OpenConstruct is the front door to the SuperInstance ecosystem:
+
+- **[openconstruct-docs](https://github.com/SuperInstance/openconstruct-docs)** — Complete documentation hub (21 docs, 109K+ words)
+- **[sunset-ecosystem](https://github.com/SuperInstance/sunset-ecosystem)** — Agent lifecycle: incubate, compete, breed or sunset
+- **[topology-lab](https://github.com/SuperInstance/topology-lab)** — Interactive math visualization (browser WASM)
+- **Conservation Spectral SDK** — 15+ spectral graph libraries across Rust, Fortran, C, Python, TypeScript
+
 ## Links
 
-- **Deep docs:** [SuperInstance/openconstruct-docs](https://github.com/SuperInstance/openconstruct-docs)
-- **Module catalog:** [SuperInstance/openconstruct-hub](https://github.com/SuperInstance/openconstruct-hub)
+- **Deep docs:** [openconstruct-docs](https://github.com/SuperInstance/openconstruct-docs)
 - **Report issues:** [GitHub Issues](https://github.com/SuperInstance/OpenConstruct/issues)
 
-## Part of [SuperInstance](https://github.com/SuperInstance)
-
-OpenConstruct is the plug-and-play front door for the SuperInstance ecosystem. One command, everything connected.
+OpenConstruct is the plug-and-play front door for [SuperInstance](https://github.com/SuperInstance). One command, everything connected.
 
 ## License
 
