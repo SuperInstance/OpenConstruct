@@ -119,6 +119,17 @@ privilege reduction, network proxying, inference interception, credential
 injection, security logging, and gateway relay behavior should remain
 consistent across runtimes.
 
+## Documents in this directory
+
+| Document | Scope |
+|---|---|
+| [gateway.md](gateway.md) | Control-plane design, protocol, auth, and API surface. |
+| [sandbox.md](sandbox.md) | Sandbox runtime model, isolation layers, and failure behavior. |
+| [security-policy.md](security-policy.md) | Policy areas, network decisions, TLS/L7 inspection, live updates, and the policy advisor. |
+| [compute-runtimes.md](compute-runtimes.md) | Driver contract and the Docker, Podman, Kubernetes, and VM runtimes. |
+| [build.md](build.md) | Build instructions. |
+| [openconstruct-developer-guide.md](openconstruct-developer-guide.md) | Practical developer guide: how to define a sandbox, what isolation mechanisms back it, and an honest inventory of what the OpenConstruct room layer implements versus what is design intent. |
+
 This keeps OpenShell usable in local single-player setups, Kubernetes
 deployments, VM-backed sandboxes, and future third-party environments. A new
 integration should make OpenShell feel like a well-behaved member of that
