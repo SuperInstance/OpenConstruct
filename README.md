@@ -16,6 +16,11 @@ Built on top of [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell), adding 
 
 ---
 
+<p align="center">
+  <img src="docs/assets/rooms-hero.jpg" alt="The layout is the prompt — a hall of rooms whose furnishings teach their occupants" width="720"><br>
+  <em>The layout is the prompt: each room's furnishings teach its agent what to do.</em>
+</p>
+
 ## What This Is
 
 OpenConstruct is a fork of NVIDIA's OpenShell — a platform for running autonomous AI agents inside sandboxed environments with explicit policy, credential, identity, and network boundaries. OpenShell gives you the isolation and control plane. OpenConstruct adds a **room-native** architecture on top: each agent works in a self-contained "room" whose layout, context, and configuration teach the agent what to do without explicit prompting.
@@ -32,6 +37,8 @@ OpenConstruct layers these additions on top:
 |----------|-------------|
 | **Rooms** | Each sandbox gets wrapped in a room — a self-contained workspace with its own context files, controls, help documents, and configuration. The room's layout *is* the prompt. |
 | **Ensigns** | Lightweight monitor agents (running on small, cheap models) that watch each room for anomalies. They stay in a cautious "yellow alert" state by default — over-preparing is cheaper than under-preparing. |
+
+<p align="center"><img src="docs/assets/ensigns.jpg" alt="Ensigns on watch — small amber figures keeping eyes on distant rooms" width="600"></p>
 | **JEPA Gravity** | Each room has a single `f64` number (the "gravity") that controls how the model responds: temperature, prompt style, max tokens, and sampling strategy are all derived from this one value. No fine-tuning, no weight changes — the room configures the model. (JEPA stands for Joint Embedding Predictive Architecture, a learning approach that predicts how representations change rather than memorizing what they are.) |
 | **Penrose correlations** | An automatic system that detects when events in different rooms correlate at the same time step, then creates connections between those rooms. The system gets more efficient through use, without explicit wiring. |
 | **ZeroClaw** | A lightweight, task-focused agent that lives inside a single room. Sandbox-folder isolation means it can only see what's in its own workspace. |
