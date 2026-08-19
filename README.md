@@ -37,13 +37,17 @@ OpenConstruct layers these additions on top:
 |----------|-------------|
 | **Rooms** | Each sandbox gets wrapped in a room — a self-contained workspace with its own context files, controls, help documents, and configuration. The room's layout *is* the prompt. |
 | **Ensigns** | Lightweight monitor agents (running on small, cheap models) that watch each room for anomalies. They stay in a cautious "yellow alert" state by default — over-preparing is cheaper than under-preparing. |
-
-<p align="center"><img src="docs/assets/ensigns.jpg" alt="Ensigns on watch — small amber figures keeping eyes on distant rooms" width="600"></p>
 | **JEPA Gravity** | Each room has a single `f64` number (the "gravity") that controls how the model responds: temperature, prompt style, max tokens, and sampling strategy are all derived from this one value. No fine-tuning, no weight changes — the room configures the model. (JEPA stands for Joint Embedding Predictive Architecture, a learning approach that predicts how representations change rather than memorizing what they are.) |
 | **Penrose correlations** | An automatic system that detects when events in different rooms correlate at the same time step, then creates connections between those rooms. The system gets more efficient through use, without explicit wiring. |
 | **ZeroClaw** | A lightweight, task-focused agent that lives inside a single room. Sandbox-folder isolation means it can only see what's in its own workspace. |
 | **CUDAClaw** | A GPU-enabled variant for rooms that need tensor operations, vision processing, or real-time inference. |
 | **PLATO Tutor lineage** | A deterministic meaning-matching system inspired by the original 1970s PLATO terminal at UIUC. It matches student responses to intended meanings using feature extraction and distance metrics — no LLM required. |
+
+
+<p align="center">
+  <img src="docs/assets/ensigns.jpg" alt="Ensigns on watch" width="480">
+  <img src="docs/assets/gravity.jpg" alt="One gravity dial, brass linkages shaping the whole room" width="480">
+</p>
 
 ## How It Works
 
