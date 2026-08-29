@@ -20,11 +20,13 @@ use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
 
 pub mod ensign;
+pub mod gravity;
 pub mod mask;
 pub mod residency;
 pub mod walks;
 
 pub use ensign::{prior, AttentionPrior, AttentionReason};
+pub use gravity::{modulate, ModelParams};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
