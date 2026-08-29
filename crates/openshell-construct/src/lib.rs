@@ -21,9 +21,11 @@ use serde::{Deserialize, Serialize};
 
 pub mod mask;
 pub mod residency;
+pub mod walks;
 
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
+pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
 
 /// The five onboarding phases.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

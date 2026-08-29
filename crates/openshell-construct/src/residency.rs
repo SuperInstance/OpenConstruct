@@ -56,6 +56,11 @@ pub const GENESIS_CHAIN: [u8; 32] = [0_u8; 32];
 pub struct WalkLog {
     records: Vec<WalkRecord>,
     chain: Vec<[u8; 32]>,
+    /// The persisted chain head this log must continue, set by the walks
+    /// file loader when a checkpoint pins one (see `walks.rs`). `None` for
+    /// a purely in-memory log: nothing persisted, nothing to check.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    expected_head: Option<[u8; 32]>,
 }
 
 impl WalkLog {
@@ -80,13 +85,28 @@ impl WalkLog {
         &self.records
     }
 
+    /// The chain links, one per record in order (empty for an empty log).
+    /// The walks file recorder persists these as checkpoints.
+    pub fn chain_links(&self) -> &[[u8; 32]] {
+        &self.chain
+    }
+
     /// Current chain head (genesis for an empty log).
     pub fn head(&self) -> [u8; 32] {
         self.chain.last().copied().unwrap_or(GENESIS_CHAIN)
     }
 
+    /// Pin the expected chain head (called by the walks file loader when
+    /// the persisted file records one). A later [`WalkLog::verify`] fails
+    /// unless the recomputed head equals it — a walks file edited,
+    /// truncated, or corrupted between restarts reads as a chain break.
+    pub fn expect_chain_head(&mut self, head: [u8; 32]) {
+        self.expected_head = Some(head);
+    }
+
     /// Recompute the chain from genesis and compare. `true` iff no record
-    /// was mutated, no entry dropped, and no link forged.
+    /// was mutated, no entry dropped, no link forged, and — when a head was
+    /// pinned by the loader — the head still matches the pin.
     pub fn verify(&self) -> bool {
         if self.records.len() != self.chain.len() {
             return false; // an entry was dropped or a link spliced
@@ -102,7 +122,10 @@ impl WalkLog {
             }
             prev = *link;
         }
-        true
+        match self.expected_head {
+            Some(expected) => self.head() == expected,
+            None => true,
+        }
     }
 }
 
@@ -161,6 +184,46 @@ const SUSTAINED_COLD_MIN_WALKS: usize = 4;
 /// Cadence needs at least this many gaps to be judged at all.
 const MIN_GAPS_FOR_CADENCE: usize = 3;
 
+impl HeatState {
+    /// The lowercase heat word, as it appears in Ensign details and growth
+    /// records (`"warm"`, `"cooling"`, `"cold"`).
+    pub fn label(&self) -> &'static str {
+        match self {
+            HeatState::Warm => "warm",
+            HeatState::Cooling => "cooling",
+            HeatState::Cold => "cold",
+        }
+    }
+}
+
+/// The most recent `window` walks (all of them if `window` exceeds the log
+/// length; none if `window == 0`). Shared by `heat` and the Ensign priors
+/// so the window rule lives exactly once.
+pub(crate) fn windowed<'a>(walks: &'a [WalkRecord], window: usize) -> &'a [WalkRecord] {
+    if window == 0 {
+        &[]
+    } else {
+        &walks[walks.len().saturating_sub(window)..]
+    }
+}
+
+/// The cold-cell anomaly, shared by `heat` and the Ensign priors (RFC
+/// 0004, §2): the last walk of `window` arrives by a road never seen in a
+/// sustained-cold prefix. Returns the novel walk, if the anomaly fires.
+pub(crate) fn novel_road_against_cold(window: &[WalkRecord]) -> Option<&WalkRecord> {
+    if window.len() > SUSTAINED_COLD_MIN_WALKS {
+        let (prefix, last) = window.split_at(window.len() - 1);
+        let last = &last[0];
+        if classify(prefix) == HeatState::Cold
+            && last.road != LOCAL_ROAD
+            && !prefix.iter().any(|r| r.road == last.road)
+        {
+            return Some(last);
+        }
+    }
+    None
+}
+
 /// Read the room's temperature from its walk records.
 ///
 /// `window` is the number of most recent walks considered (all of them if
@@ -187,25 +250,14 @@ const MIN_GAPS_FOR_CADENCE: usize = 3;
 /// action is not an error to suppress — it is the most informative event in
 /// the room's life. Hold it without verdict; surface it to the keeper.
 pub fn heat(walks: &[WalkRecord], window: usize) -> HeatReading {
-    let window = if window == 0 {
-        &[][..]
-    } else {
-        &walks[walks.len().saturating_sub(window)..]
-    };
+    let window = windowed(walks, window);
 
     // Cold-cell anomaly: novel road against flat sediment.
-    if window.len() > SUSTAINED_COLD_MIN_WALKS {
-        let (prefix, last) = window.split_at(window.len() - 1);
-        let last = &last[0];
-        if classify(prefix) == HeatState::Cold
-            && last.road != LOCAL_ROAD
-            && !prefix.iter().any(|r| r.road == last.road)
-        {
-            return HeatReading {
-                state: HeatState::Cold,
-                novel_road_detected: true,
-            };
-        }
+    if novel_road_against_cold(window).is_some() {
+        return HeatReading {
+            state: HeatState::Cold,
+            novel_road_detected: true,
+        };
     }
 
     HeatReading {
