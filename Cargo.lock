@@ -3920,6 +3920,7 @@ dependencies = [
  "libc",
  "miette",
  "nix",
+ "openshell-construct",
  "openshell-core",
  "openshell-ocsf",
  "openshell-policy",

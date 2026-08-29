@@ -20,6 +20,7 @@ mod process;
 pub mod procfs;
 mod provider_credentials;
 pub mod proxy;
+mod residency;
 mod sandbox;
 mod secrets;
 mod skills;
@@ -342,6 +343,14 @@ pub async fn run_sandbox(
         openshell_endpoint.clone(),
         sandbox_name_for_agg.clone().or_else(|| sandbox_id.clone()),
     ));
+
+    // Grow-or-load the sandbox's residency room (RFC 0004): one room per
+    // supervised sandbox, ticking on its own supervision loop. A tampered
+    // room file disables residency (warn above) rather than running over
+    // evidence. The registry feeds the model-call path (see proxy).
+    let _room_residency = sandbox_id
+        .as_deref()
+        .and_then(|id| residency::spawn_residency(id, openshell_endpoint.as_deref()));
 
     // Validate that the required "sandbox" user exists in this image.
     // All sandbox images must include this user for privilege dropping.

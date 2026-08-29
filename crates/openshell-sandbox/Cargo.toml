@@ -16,6 +16,7 @@ name = "openshell-sandbox"
 path = "src/main.rs"
 
 [dependencies]
+openshell-construct = { path = "../openshell-construct" }
 openshell-core = { path = "../openshell-core" }
 openshell-ocsf = { path = "../openshell-ocsf" }
 openshell-policy = { path = "../openshell-policy" }
