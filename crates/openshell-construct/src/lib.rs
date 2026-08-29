@@ -35,7 +35,7 @@ pub use gravity::{modulate, ModelParams};
 pub use growth::{onboard, GrowthRecord};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
-pub use room::{Room, ROOM_WINDOW};
+pub use room::{Room, RoomError, ROOM_FILE_FORMAT, ROOM_WINDOW};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
 
 /// The five onboarding phases.

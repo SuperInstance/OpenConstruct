@@ -217,7 +217,7 @@ pub(crate) fn encode_hex(bytes: &[u8]) -> String {
 }
 
 /// Decode a 64-char hex string into a 32-byte chain head.
-fn decode_hex32(s: &str) -> Option<[u8; 32]> {
+pub(crate) fn decode_hex32(s: &str) -> Option<[u8; 32]> {
     if s.len() != 64 {
         return None;
     }
