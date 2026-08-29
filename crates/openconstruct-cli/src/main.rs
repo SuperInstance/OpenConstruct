@@ -34,7 +34,7 @@ enum Commands {
         #[command(subcommand)]
         action: TickCommands,
     },
-    /// Manage Plato rooms
+    /// Manage rooms: grown residency rooms (grow/walk/show) and Plato rooms
     Room {
         #[command(subcommand)]
         action: RoomCommands,
@@ -94,6 +94,34 @@ enum TickCommands {
 
 #[derive(Subcommand)]
 enum RoomCommands {
+    /// Grow a new residency room from a seed and charter (RFC 0004)
+    Grow {
+        /// The seed the room grows from (any string; its bytes are the seed)
+        #[arg(long)]
+        seed: String,
+        /// The room's charter — the commission it holds
+        #[arg(long)]
+        charter: String,
+        /// Room file to create
+        #[arg(long)]
+        out: PathBuf,
+    },
+    /// Record one arrival (walk) on a grown room
+    Walk {
+        /// Room file grown with `room grow`
+        file: PathBuf,
+        /// The road the arrival came by (e.g. "local", "h-road-0")
+        #[arg(long)]
+        road: String,
+        /// Link quality of the arrival, 0.0–1.0
+        #[arg(long, default_value_t = 0.5)]
+        link_q: f32,
+    },
+    /// Show a grown room's growth record / onboarding document
+    Show {
+        /// Room file grown with `room grow`
+        file: PathBuf,
+    },
     /// Create a new Plato room
     Create {
         /// Room name
@@ -674,6 +702,25 @@ fn main() -> Result<()> {
             TickCommands::Read { count } => run_tick_read(count),
         },
         Commands::Room { action } => match action {
+            RoomCommands::Grow { seed, charter, out } => {
+                let tick = u64::try_from(chrono::Utc::now().timestamp()).unwrap_or(0);
+                let doc = openshell_construct::cli::grow_room(&seed, &charter, tick, &out)?;
+                println!("{}", doc.trim_end());
+                println!();
+                println!("✓ Room grown and saved to {}", out.display());
+                Ok(())
+            }
+            RoomCommands::Walk { file, road, link_q } => {
+                let ts = u64::try_from(chrono::Utc::now().timestamp()).unwrap_or(0);
+                let out = openshell_construct::cli::walk_room(&file, &road, link_q, ts)?;
+                println!("{}", out);
+                Ok(())
+            }
+            RoomCommands::Show { file } => {
+                let doc = openshell_construct::cli::show_room(&file)?;
+                println!("{}", doc.trim_end());
+                Ok(())
+            }
             RoomCommands::Create { name } => run_room_create(&name),
             RoomCommands::List => run_room_list(),
             RoomCommands::Join { name } => run_room_join(&name),
