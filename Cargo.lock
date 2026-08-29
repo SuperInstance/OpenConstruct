@@ -3577,6 +3577,7 @@ dependencies = [
  "dialoguer",
  "dirs",
  "indicatif",
+ "openshell-construct",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

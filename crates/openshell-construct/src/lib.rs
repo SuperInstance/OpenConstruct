@@ -22,9 +22,11 @@
 use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
 
+pub mod cli;
 pub mod ensign;
 pub mod gravity;
 pub mod growth;
+pub mod hooks;
 pub mod mask;
 pub mod residency;
 pub mod room;
@@ -32,6 +34,7 @@ pub mod walks;
 
 pub use ensign::{prior, AttentionPrior, AttentionReason};
 pub use gravity::{modulate, ModelParams};
+pub use hooks::{HooksRegistry, NoopHooks, RoomHooks};
 pub use growth::{onboard, GrowthRecord};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
