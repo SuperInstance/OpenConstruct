@@ -12,21 +12,25 @@
 //! 5. **EnvironmentGeneration** — produce the final `OnboardingConfig`.
 //!
 //! It also grows the room-native residency layer (RFC 0004, *The Room
-//! Grows a Mask*): rooms derive a [`RoomMask`] at creation, record walks in
-//! a hash-chained [`WalkLog`], and are read through [`heat`] — subtext is
-//! observed, not declared.
+//! Grows a Mask*): rooms derive a [`RoomMask`] at creation, record walks
+//! in a hash-chained [`WalkLog`] persisted by [`WalkRecorder`], are read
+//! through [`heat`], surface anomalies as Ensign [`prior`]s, bend gravity
+//! through heat via [`modulate`], and onboard their keepers from a
+//! [`GrowthRecord`] — subtext is observed, not declared.
 
 use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
 
 pub mod ensign;
 pub mod gravity;
+pub mod growth;
 pub mod mask;
 pub mod residency;
 pub mod walks;
 
 pub use ensign::{prior, AttentionPrior, AttentionReason};
 pub use gravity::{modulate, ModelParams};
+pub use growth::{onboard, GrowthRecord};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};

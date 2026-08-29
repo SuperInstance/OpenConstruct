@@ -207,7 +207,8 @@ fn write_checkpoint(file: &mut fs::File, head: &[u8; 32], records: usize) -> io:
     file.write_all(b"\n")
 }
 
-fn encode_hex(bytes: &[u8]) -> String {
+/// Lowercase hex encoding (shared with the growth record).
+pub(crate) fn encode_hex(bytes: &[u8]) -> String {
     let mut out = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
         out.push_str(&format!("{byte:02x}"));
