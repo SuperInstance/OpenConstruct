@@ -10,9 +10,20 @@
 //! 3. **InterfaceSelection** — choose interface preferences (CLI, TUI, API, etc.).
 //! 4. **ConnectionSetup** — configure external connections (APIs, databases, services).
 //! 5. **EnvironmentGeneration** — produce the final `OnboardingConfig`.
+//!
+//! It also grows the room-native residency layer (RFC 0004, *The Room
+//! Grows a Mask*): rooms derive a [`RoomMask`] at creation, record walks in
+//! a hash-chained [`WalkLog`], and are read through [`heat`] — subtext is
+//! observed, not declared.
 
 use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
+
+pub mod mask;
+pub mod residency;
+
+pub use mask::{derive_mask, MaskChannel, RoomMask};
+pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
 
 /// The five onboarding phases.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
