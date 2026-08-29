@@ -16,7 +16,8 @@
 //! in a hash-chained [`WalkLog`] persisted by [`WalkRecorder`], are read
 //! through [`heat`], surface anomalies as Ensign [`prior`]s, bend gravity
 //! through heat via [`modulate`], and onboard their keepers from a
-//! [`GrowthRecord`] — subtext is observed, not declared.
+//! [`GrowthRecord`] — subtext is observed, not declared. A [`Room`] is the
+//! binding of all of them: grow it, tick it, save it, load it.
 
 use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
@@ -26,6 +27,7 @@ pub mod gravity;
 pub mod growth;
 pub mod mask;
 pub mod residency;
+pub mod room;
 pub mod walks;
 
 pub use ensign::{prior, AttentionPrior, AttentionReason};
@@ -33,6 +35,7 @@ pub use gravity::{modulate, ModelParams};
 pub use growth::{onboard, GrowthRecord};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
+pub use room::{Room, ROOM_WINDOW};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
 
 /// The five onboarding phases.

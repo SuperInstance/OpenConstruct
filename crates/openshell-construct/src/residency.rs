@@ -52,7 +52,7 @@ pub const GENESIS_CHAIN: [u8; 32] = [0_u8; 32];
 /// Chain rule: `chain[i] = SHA-256(chain[i-1] || record_bytes(records[i]))`
 /// with `chain[-1] = GENESIS_CHAIN`. Any tampered record, dropped entry, or
 /// forged link breaks [`WalkLog::verify`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct WalkLog {
     records: Vec<WalkRecord>,
     chain: Vec<[u8; 32]>,
