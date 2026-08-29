@@ -17,7 +17,9 @@
 //! through [`heat`], surface anomalies as Ensign [`prior`]s, bend gravity
 //! through heat via [`modulate`], and onboard their keepers from a
 //! [`GrowthRecord`] — subtext is observed, not declared. A [`Room`] is the
-//! binding of all of them: grow it, tick it, save it, load it.
+//! binding of all of them: grow it, tick it, save it, load it. The
+//! [`RoomResidency`] registry is the runtime half: grow-or-load per
+//! sandbox, one walk per supervision tick, model params for the call path.
 
 use openshell_registry::ModuleShadow;
 use serde::{Deserialize, Serialize};
@@ -30,6 +32,7 @@ pub mod hooks;
 pub mod mask;
 pub mod residency;
 pub mod room;
+pub mod runtime;
 pub mod walks;
 
 pub use ensign::{prior, AttentionPrior, AttentionReason};
@@ -39,6 +42,7 @@ pub use growth::{onboard, GrowthRecord};
 pub use mask::{derive_mask, MaskChannel, RoomMask};
 pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
 pub use room::{Room, RoomError, ROOM_FILE_FORMAT, ROOM_WINDOW};
+pub use runtime::{seed_for_sandbox, RoomResidency, DEFAULT_SANDBOX_CHARTER};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
 
 /// The five onboarding phases.
