@@ -466,7 +466,7 @@ mod tests {
 
     /// A saved-and-reloaded JSON value, with one field rewritten — the
     /// tamperer's pen.
-    fn tamper_with(path: &std::path::Path, edit: impl FnOnce(&mut Value)) {
+    fn tamper_with(path: &Path, edit: impl FnOnce(&mut Value)) {
         let mut value: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
         edit(&mut value);
         fs::write(path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
