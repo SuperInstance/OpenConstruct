@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fmt::Write;
 
-use crate::mask::{derive_mask, MaskChannel, RoomMask};
+use crate::mask::{MaskChannel, RoomMask, derive_mask};
 use crate::residency::HeatState;
 use crate::walks::encode_hex;
 
@@ -160,7 +160,11 @@ mod tests {
     #[test]
     fn record_serializes_round_trip() {
         let mut record = rich_record();
-        record.heat_history = vec![(0, HeatState::Warm), (600, HeatState::Cooling), (1_200, HeatState::Cold)];
+        record.heat_history = vec![
+            (0, HeatState::Warm),
+            (600, HeatState::Cooling),
+            (1_200, HeatState::Cold),
+        ];
 
         let json = serde_json::to_string(&record).unwrap();
         let back: GrowthRecord = serde_json::from_str(&json).unwrap();

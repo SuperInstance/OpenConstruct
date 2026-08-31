@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-//! Integration hooks — where OpenShell's loops call the room in (RFC 0004).
+//! Integration hooks — where `OpenShell`'s loops call the room in (RFC 0004).
 //!
 //! Two insertion points, both documented in
 //! `rfc/0004-the-room-grows-a-mask/README.md`:
@@ -72,7 +72,9 @@ impl HooksRegistry {
 
     /// Ask the room's hook for residency-shaped model parameters.
     pub fn model_params(&self, room_id: &str) -> Option<ModelParams> {
-        self.hooks.get(room_id).and_then(|h| h.model_params(room_id))
+        self.hooks
+            .get(room_id)
+            .and_then(|h| h.model_params(room_id))
     }
 }
 
@@ -101,6 +103,16 @@ mod tests {
         }
     }
 
+    struct Listener(Mutex<Vec<String>>);
+    impl RoomHooks for Listener {
+        fn on_prior(&self, room_id: &str, _prior: &AttentionPrior) {
+            self.0.lock().unwrap().push(room_id.to_owned());
+        }
+        fn model_params(&self, _room_id: &str) -> Option<ModelParams> {
+            None
+        }
+    }
+
     #[test]
     fn noop_default_hears_nothing_and_overrides_nothing() {
         let noop = NoopHooks;
@@ -113,32 +125,28 @@ mod tests {
 
     #[test]
     fn registry_dispatches_by_room_id() {
-        let log: Mutex<Vec<String>> = Mutex::new(Vec::new());
         // Use a dedicated listener to prove dispatch reaches the right hook
         // and not others.
-        struct Listener(Mutex<Vec<String>>);
-        impl RoomHooks for Listener {
-            fn on_prior(&self, room_id: &str, _prior: &AttentionPrior) {
-                self.0.lock().unwrap().push(room_id.to_owned());
-            }
-            fn model_params(&self, _room_id: &str) -> Option<ModelParams> {
-                None
-            }
-        }
         let listener = Listener(Mutex::new(Vec::new()));
         let mut reg = HooksRegistry::new();
         reg.register("room-a", Box::new(listener));
-        let params = ModelParams { temperature: 0.35, max_tokens: 512, prompt_style: "terse" };
-        reg.register("room-b", Box::new(ParamRoom(Mutex::new(Vec::new()), params)));
+        let params = ModelParams {
+            temperature: 0.35,
+            max_tokens: 512,
+            prompt_style: "terse",
+        };
+        reg.register(
+            "room-b",
+            Box::new(ParamRoom(Mutex::new(Vec::new()), params)),
+        );
         reg.register("room-b2", Box::new(NoopHooks));
 
         reg.fire_prior("room-a", &prior(AttentionReason::NovelRoad, 0.9));
         reg.fire_prior("room-b", &prior(AttentionReason::HeatTransition, 0.6));
         // room-b2 was registered but never fired at; nothing should route
         // room-a's event to room-b or room-b2.
-        assert_eq!(reg.model_params("room-b").map(|p| p.temperature), Some(0.35));
+        let room_b = reg.model_params("room-b");
+        assert!((room_b.unwrap().temperature - 0.35).abs() < 1e-9);
         assert!(reg.model_params("room-a").is_none());
-        let touched: Vec<String> = log.lock().unwrap().clone();
-        assert!(touched.is_empty()); // ParamRoom only records when its model_params is consulted for its own room
     }
 }

@@ -122,10 +122,8 @@ impl WalkLog {
             }
             prev = *link;
         }
-        match self.expected_head {
-            Some(expected) => self.head() == expected,
-            None => true,
-        }
+        self.expected_head
+            .is_none_or(|expected| self.head() == expected)
     }
 }
 
@@ -189,9 +187,9 @@ impl HeatState {
     /// records (`"warm"`, `"cooling"`, `"cold"`).
     pub fn label(&self) -> &'static str {
         match self {
-            HeatState::Warm => "warm",
-            HeatState::Cooling => "cooling",
-            HeatState::Cold => "cold",
+            Self::Warm => "warm",
+            Self::Cooling => "cooling",
+            Self::Cold => "cold",
         }
     }
 }
@@ -199,7 +197,7 @@ impl HeatState {
 /// The most recent `window` walks (all of them if `window` exceeds the log
 /// length; none if `window == 0`). Shared by `heat` and the Ensign priors
 /// so the window rule lives exactly once.
-pub(crate) fn windowed<'a>(walks: &'a [WalkRecord], window: usize) -> &'a [WalkRecord] {
+pub(crate) fn windowed(walks: &[WalkRecord], window: usize) -> &[WalkRecord] {
     if window == 0 {
         &[]
     } else {
@@ -294,7 +292,9 @@ fn classify(walks: &[WalkRecord]) -> HeatState {
     // Write cadence: coefficient of variation of inter-arrival gaps.
     let gaps: Vec<f64> = walks
         .windows(2)
-        .map(|pair| f64::from(u32::try_from(pair[1].ts.saturating_sub(pair[0].ts)).expect("gap fits u32")))
+        .map(|pair| {
+            f64::from(u32::try_from(pair[1].ts.saturating_sub(pair[0].ts)).expect("gap fits u32"))
+        })
         .collect();
     let cadence_cv = |threshold: f64, below: bool| -> bool {
         if gaps.len() < MIN_GAPS_FOR_CADENCE {
@@ -432,21 +432,39 @@ mod tests {
     fn warm_room_reads_warm() {
         let walks = warm_walks();
         let reading = heat(&walks, usize::MAX);
-        assert_eq!(reading, HeatReading { state: HeatState::Warm, novel_road_detected: false });
+        assert_eq!(
+            reading,
+            HeatReading {
+                state: HeatState::Warm,
+                novel_road_detected: false
+            }
+        );
     }
 
     #[test]
     fn cooling_room_reads_cooling() {
         let walks = cooling_walks();
         let reading = heat(&walks, usize::MAX);
-        assert_eq!(reading, HeatReading { state: HeatState::Cooling, novel_road_detected: false });
+        assert_eq!(
+            reading,
+            HeatReading {
+                state: HeatState::Cooling,
+                novel_road_detected: false
+            }
+        );
     }
 
     #[test]
     fn cold_room_reads_cold() {
         let walks = cold_walks();
         let reading = heat(&walks, usize::MAX);
-        assert_eq!(reading, HeatReading { state: HeatState::Cold, novel_road_detected: false });
+        assert_eq!(
+            reading,
+            HeatReading {
+                state: HeatState::Cold,
+                novel_road_detected: false
+            }
+        );
     }
 
     #[test]
@@ -464,7 +482,10 @@ mod tests {
         let reading = heat(&walks, usize::MAX);
         assert_eq!(
             reading,
-            HeatReading { state: HeatState::Cold, novel_road_detected: true }
+            HeatReading {
+                state: HeatState::Cold,
+                novel_road_detected: true
+            }
         );
     }
 
@@ -483,11 +504,17 @@ mod tests {
     fn empty_window_reads_cold() {
         assert_eq!(
             heat(&[], usize::MAX),
-            HeatReading { state: HeatState::Cold, novel_road_detected: false }
+            HeatReading {
+                state: HeatState::Cold,
+                novel_road_detected: false
+            }
         );
         assert_eq!(
             heat(&cold_walks(), 0),
-            HeatReading { state: HeatState::Cold, novel_road_detected: false }
+            HeatReading {
+                state: HeatState::Cold,
+                novel_road_detected: false
+            }
         );
     }
 

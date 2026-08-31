@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-//! **openshell-registry** — Module registry for the OpenConstruct onboarding engine.
+//! **openshell-registry** — Module registry for the `OpenConstruct` onboarding engine.
 //!
 //! Provides a [`ModuleRegistry`] containing [`ModuleShadow`] descriptors that
 //! describe capabilities an agent can adopt during onboarding. The initial
-//! registry ships with a curated set of SuperInstance modules and supports
+//! registry ships with a curated set of `SuperInstance` modules and supports
 //! domain filtering plus simple dependency resolution.
 
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,7 @@ impl ModuleRegistry {
         Self { modules, index }
     }
 
-    /// Return the default SuperInstance module registry.
+    /// Return the default `SuperInstance` module registry.
     pub fn default_registry() -> Self {
         Self::new(superinstance_modules())
     }
@@ -64,10 +64,7 @@ impl ModuleRegistry {
 
     /// Filter modules by domain.
     pub fn by_domain(&self, domain: &str) -> Vec<&ModuleShadow> {
-        self.modules
-            .iter()
-            .filter(|m| m.domain == domain)
-            .collect()
+        self.modules.iter().filter(|m| m.domain == domain).collect()
     }
 
     /// Look up a module by id.
@@ -81,42 +78,8 @@ impl ModuleRegistry {
     /// Returns a topologically ordered list or an error if a dependency is
     /// missing or a cycle is detected.
     pub fn resolve(&self, selected: &[String]) -> Result<Vec<&ModuleShadow>, RegistryError> {
-        let mut needed = HashSet::new();
-        let mut stack: Vec<String> = selected.to_vec();
-        while let Some(id) = stack.pop() {
-            if needed.contains(&id) {
-                continue;
-            }
-            let module = self.get(&id).ok_or_else(|| RegistryError::MissingModule {
-                id: id.clone(),
-            })?;
-            needed.insert(id);
-            for dep in &module.requires {
-                if !needed.contains(dep) {
-                    stack.push(dep.clone());
-                }
-            }
-        }
-
-        // Topological sort (Kahn's algorithm)
-        let mut in_degree: HashMap<&String, usize> = HashMap::new();
-        for id in &needed {
-            in_degree.insert(id, 0);
-        }
-        for id in &needed {
-            let module = self.get(id).unwrap();
-            for dep in &module.requires {
-                if needed.contains(dep) {
-                    *in_degree.entry(dep).or_insert(0) += 1;
-                }
-            }
-        }
-
         // Reverse edges: dependents → dependency direction
         // Actually, let's just do a simple topological sort where deps come first.
-        let mut result: Vec<&ModuleShadow> = Vec::new();
-        let mut visited: HashSet<String> = HashSet::new();
-
         fn visit<'a>(
             id: &str,
             registry: &'a ModuleRegistry,
@@ -144,6 +107,40 @@ impl ModuleRegistry {
             Ok(())
         }
 
+        let mut needed = HashSet::new();
+        let mut stack: Vec<String> = selected.to_vec();
+        while let Some(id) = stack.pop() {
+            if needed.contains(&id) {
+                continue;
+            }
+            let module = self
+                .get(&id)
+                .ok_or_else(|| RegistryError::MissingModule { id: id.clone() })?;
+            needed.insert(id);
+            for dep in &module.requires {
+                if !needed.contains(dep) {
+                    stack.push(dep.clone());
+                }
+            }
+        }
+
+        // Topological sort (Kahn's algorithm)
+        let mut in_degree: HashMap<&String, usize> = HashMap::new();
+        for id in &needed {
+            in_degree.insert(id, 0);
+        }
+        for id in &needed {
+            let module = self.get(id).unwrap();
+            for dep in &module.requires {
+                if needed.contains(dep) {
+                    *in_degree.entry(dep).or_insert(0) += 1;
+                }
+            }
+        }
+
+        let mut result: Vec<&ModuleShadow> = Vec::new();
+        let mut visited: HashSet<String> = HashSet::new();
+
         let mut visiting: HashSet<String> = HashSet::new();
         for id in &needed {
             visit(id, self, &needed, &mut visited, &mut visiting, &mut result)?;
@@ -164,7 +161,7 @@ pub enum RegistryError {
     CyclicDependency { id: String },
 }
 
-/// Return the curated list of SuperInstance modules shipped with OpenConstruct.
+/// Return the curated list of `SuperInstance` modules shipped with `OpenConstruct`.
 pub fn superinstance_modules() -> Vec<ModuleShadow> {
     vec![
         ModuleShadow {
@@ -297,7 +294,12 @@ mod tests {
         // Should include spectral-graph-core (dep) before sheaf-cohomology
         assert!(ids.contains(&"spectral-graph-core"));
         assert!(ids.contains(&"sheaf-cohomology"));
-        assert!(ids.iter().position(|&x| x == "spectral-graph-core").unwrap() < ids.iter().position(|&x| x == "sheaf-cohomology").unwrap());
+        assert!(
+            ids.iter()
+                .position(|&x| x == "spectral-graph-core")
+                .unwrap()
+                < ids.iter().position(|&x| x == "sheaf-cohomology").unwrap()
+        );
     }
 
     #[test]

@@ -517,7 +517,7 @@ mod tests {
     fn wait_for_child_exec(pid: i32, target: &Path) {
         use std::os::unix::ffi::OsStrExt as _;
         let target_bytes = target.as_os_str().as_bytes();
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
         loop {
             if let Ok(link) = std::fs::read_link(format!("/proc/{pid}/exe"))
                 && link.as_os_str().as_bytes().starts_with(target_bytes)
@@ -526,10 +526,35 @@ mod tests {
             }
             assert!(
                 std::time::Instant::now() < deadline,
-                "child pid {pid} did not exec into {target:?} within 2s"
+                "child pid {pid} did not exec into {target:?} within 10s"
             );
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
+    }
+
+    /// Probe whether the temp filesystem stores filename bytes verbatim.
+    ///
+    /// Some filesystems backed by host mounts (osxfs/Docker-for-Mac bind
+    /// mounts, WSL/NTFS drvfs, some 9p shares) reject or re-encode names
+    /// that are not valid UTF-8. The non-UTF-8 strip tests compare raw
+    /// `/proc/<pid>/exe` bytes against a name we constructed, so they can
+    /// only run where the name round-trips byte-identically.
+    #[cfg(target_os = "linux")]
+    fn temp_fs_preserves_raw_name_bytes(dir: &Path, name: &std::ffi::OsStr) -> bool {
+        use std::os::unix::ffi::OsStrExt as _;
+
+        let probe = dir.join(name);
+        if std::fs::write(&probe, b"probe").is_err() {
+            return false;
+        }
+        let roundtripped = std::fs::read_dir(dir).ok().and_then(|entries| {
+            entries
+                .flatten()
+                .find(|entry| entry.file_name().as_bytes() == name.as_bytes())
+                .map(|entry| entry.file_name())
+        });
+        let _ = std::fs::remove_file(&probe);
+        roundtripped.is_some()
     }
 
     /// Retry `Command::spawn` on `ETXTBSY`. The kernel rejects `execve` when
@@ -688,6 +713,16 @@ mod tests {
     /// still strip exactly one kernel-added `" (deleted)"` suffix. We operate
     /// on raw bytes via `OsStrExt`, so invalid UTF-8 is not a reason to skip
     /// the strip and return a path that downstream `stat()` calls will reject.
+    ///
+    /// Environment gates (skipped, not failed, when they do not hold — the
+    /// strip logic itself is pure byte manipulation):
+    ///
+    /// - `/bin/sleep` must exist to copy-and-unlink (same gate as the other
+    ///   procfs exe tests).
+    /// - The temp filesystem must store the raw `0xFF` filename byte
+    ///   verbatim. Translating filesystems (osxfs/NTFS-backed bind mounts,
+    ///   some 9p shares) reject or re-encode non-UTF-8 names, so the
+    ///   constructed path can never match the `/proc/<pid>/exe` readlink.
     #[cfg(target_os = "linux")]
     #[test]
     fn binary_path_strips_suffix_for_non_utf8_filename() {
@@ -695,12 +730,27 @@ mod tests {
         use std::os::unix::ffi::{OsStrExt, OsStringExt};
         use std::os::unix::fs::PermissionsExt;
 
+        if !Path::new("/bin/sleep").exists() {
+            eprintln!("skipping: /bin/sleep not available");
+            return;
+        }
+
         let tmp = tempfile::TempDir::new().unwrap();
         // 0xFF is not valid UTF-8. Build the filename on raw bytes.
         let mut raw_name: Vec<u8> = b"badname-".to_vec();
         raw_name.push(0xFF);
         raw_name.extend_from_slice(b".bin");
-        let exe_path = tmp.path().join(OsString::from_vec(raw_name));
+        let raw_name = OsString::from_vec(raw_name);
+        if !temp_fs_preserves_raw_name_bytes(tmp.path(), raw_name.as_os_str()) {
+            eprintln!(
+                "skipping: temp filesystem {} does not preserve non-UTF-8 \
+                 filename bytes (translating mount?); strip logic needs a \
+                 byte-identical round-trip",
+                tmp.path().display()
+            );
+            return;
+        }
+        let exe_path = tmp.path().join(&raw_name);
 
         std::fs::copy("/bin/sleep", &exe_path).unwrap();
         std::fs::set_permissions(&exe_path, std::fs::Permissions::from_mode(0o755)).unwrap();

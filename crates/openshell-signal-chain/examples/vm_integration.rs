@@ -5,9 +5,7 @@
 //!
 //! Run with: cargo run --example vm_integration -p openshell-signal-chain
 
-use openshell_signal_chain::{
-    Dial, Room, SignalChain, maritime_spline, HolonomyRoom, BettiResult,
-};
+use openshell_signal_chain::{Dial, HolonomyRoom, SignalChain, maritime_spline};
 
 fn main() {
     println!("=== Signal Chain × Spline × Holonomy Integration ===\n");
@@ -18,8 +16,10 @@ fn main() {
     let constraints = maritime_spline();
     println!("  {} constraints:", constraints.len());
     for c in &constraints {
-        println!("    {:25} range=[{:5}, {:5}] neutral={:.1}",
-            c.name, c.lo, c.hi, c.neutral);
+        println!(
+            "    {:25} range=[{:5}, {:5}] neutral={:.1}",
+            c.name, c.lo, c.hi, c.neutral
+        );
     }
 
     let readings = vec![
@@ -33,7 +33,13 @@ fn main() {
     for (name, value) in &readings {
         if let Some(c) = constraints.iter().find(|c| c.name == *name) {
             let d = c.curvature_distance(*value);
-            let status = if d > 1.0 { "⚠ violation" } else if d > 0.5 { "~ boundary" } else { "✓ safe" };
+            let status = if d > 1.0 {
+                "⚠ violation"
+            } else if d > 0.5 {
+                "~ boundary"
+            } else {
+                "✓ safe"
+            };
             println!("    {:25} = {:5}  → {:.3}  {}", name, value, d, status);
         }
     }
@@ -44,15 +50,24 @@ fn main() {
     let mut chain = SignalChain::new("cocapn-fleet");
 
     let nav = chain.room("navigation");
-    nav.add_snap(serde_json::json!({"lat": 54.432, "lon": -2.891, "heading": 127.4}), 1.0);
+    nav.add_snap(
+        serde_json::json!({"lat": 54.432, "lon": -2.891, "heading": 127.4}),
+        1.0,
+    );
     nav.add_inference(serde_json::json!({"eta": "14:30"}), 0.85);
 
     let sonar = chain.room("sonar-array");
-    sonar.add_snap(serde_json::json!({"contact": "solid", "bearing": 127.4, "range_m": 200}), 1.0);
+    sonar.add_snap(
+        serde_json::json!({"contact": "solid", "bearing": 127.4, "range_m": 200}),
+        1.0,
+    );
     sonar.add_inference(serde_json::json!({"hypothesis": "metal wreck"}), 0.75);
 
     let weather = chain.room_with_dial("weather", Dial::new(0.6));
-    weather.add_snap(serde_json::json!({"wind_knots": 22, "pressure_hpa": 1008}), 1.0);
+    weather.add_snap(
+        serde_json::json!({"wind_knots": 22, "pressure_hpa": 1008}),
+        1.0,
+    );
     weather.add_inference(serde_json::json!({"storm": "gale force 8 in 6hrs"}), 0.7);
 
     println!("  Rooms at different dials:");
@@ -85,18 +100,30 @@ fn main() {
 
     for (name, v, e) in &scenarios {
         let mut room = HolonomyRoom::new(name, Dial::hard());
-        for _ in 0..*v { room.add_snap(); }
-        for _ in 0..*e { room.add_edge(); }
+        for _ in 0..*v {
+            room.add_snap();
+        }
+        for _ in 0..*e {
+            room.add_edge();
+        }
 
         let b = room.betti();
         let thr = if *v >= 2 { *v - 2 } else { 0 };
 
-        let label = if b.is_rigid { rigid += 1; "RIGID ✓" }
-            else if b.has_emergence { emergent += 1; "EMERGENT" }
-            else { "loose" };
+        let label = if b.is_rigid {
+            rigid += 1;
+            "RIGID ✓"
+        } else if b.has_emergence {
+            emergent += 1;
+            "EMERGENT"
+        } else {
+            "loose"
+        };
 
-        println!("  {:12}  V={:2} E={:3}  β₁={:2}  (V-2={:2})  {}",
-            name, v, e, b.beta, thr, label);
+        println!(
+            "  {:12}  V={:2} E={:3}  β₁={:2}  (V-2={:2})  {}",
+            name, v, e, b.beta, thr, label
+        );
     }
 
     println!("\n  Fleet: {} rigid, {} emergent", rigid, emergent);
@@ -104,11 +131,17 @@ fn main() {
     // ── Part 4: Dial × constraint interaction ─────────────────────────────
     println!("\n─── 4. Dial × Constraint Interaction ───\n");
 
-    let wave = constraints.iter().find(|c| c.name == "wave_height_dm").unwrap();
+    let wave = constraints
+        .iter()
+        .find(|c| c.name == "wave_height_dm")
+        .unwrap();
     let wave_val = 40_i32;
     let dist = wave.curvature_distance(wave_val);
     println!("  Wave height: {} dm → curvature={:.3}", wave_val, dist);
-    println!("  At hard (0.0): {} violation", if dist > 1.0 { "⚠" } else { "no" });
+    println!(
+        "  At hard (0.0): {} violation",
+        if dist > 1.0 { "⚠" } else { "no" }
+    );
     println!("  At soft (1.0): advisory, not blocking");
 
     println!("\n=== Integration complete ===");

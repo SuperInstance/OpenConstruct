@@ -30,8 +30,8 @@
 //! let (snaps, inferences) = bridge.surface_at(Dial::soft());
 //! ```
 
-use serde::{Deserialize, Serialize};
 use crate::{Dial, SplineConstraint, ViolationSeverity};
+use serde::{Deserialize, Serialize};
 
 /// Result of checking a value against a constraint.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -62,13 +62,25 @@ impl VmCheckResult {
         // At soft (position=1): all violations are advisories (1.0)
         match self.severity {
             ViolationSeverity::Critical => {
-                if dial.position > 0.75 { 0.5 } else { 0.0 }
+                if dial.position > 0.75 {
+                    0.5
+                } else {
+                    0.0
+                }
             }
             ViolationSeverity::Warning => {
-                if dial.position > 0.75 { 0.8 } else { 0.3 }
+                if dial.position > 0.75 {
+                    0.8
+                } else {
+                    0.3
+                }
             }
             ViolationSeverity::Advisory => {
-                if dial.position > 0.75 { 1.0 } else { 0.7 }
+                if dial.position > 0.75 {
+                    1.0
+                } else {
+                    0.7
+                }
             }
         }
     }
@@ -167,7 +179,9 @@ impl FluxVmBridge {
             passed,
             severity,
             curvature,
-            hard_confidence: if passed { 1.0 } else {
+            hard_confidence: if passed {
+                1.0
+            } else {
                 match severity {
                     ViolationSeverity::Critical => 0.0,
                     ViolationSeverity::Warning => 0.3,
@@ -223,7 +237,8 @@ impl FluxVmBridge {
 
     /// Get critical violations.
     pub fn critical_violations(&self) -> Vec<&VmCheckResult> {
-        self.results.iter()
+        self.results
+            .iter()
             .filter(|r| !r.passed && r.severity == ViolationSeverity::Critical)
             .collect()
     }
@@ -236,7 +251,10 @@ impl FluxVmBridge {
     ///
     /// At hard (0.0): only passed checks become snaps.
     /// At soft (1.0): all checks surface, violations become low-confidence inferences.
-    pub fn surface_at(&self, dial: Dial) -> (Vec<serde_json::Value>, Vec<(serde_json::Value, f64)>) {
+    pub fn surface_at(
+        &self,
+        dial: Dial,
+    ) -> (Vec<serde_json::Value>, Vec<(serde_json::Value, f64)>) {
         let mut snaps = Vec::new();
         let mut inferences = Vec::new();
 
@@ -263,10 +281,15 @@ impl FluxVmBridge {
 
     /// Print a human-readable constraint report.
     pub fn print_report(&self) {
-        println!("  FluxVmBridge — {} constraints loaded:", self.constraint_count());
+        println!(
+            "  FluxVmBridge — {} constraints loaded:",
+            self.constraint_count()
+        );
         for c in &self.constraints {
-            println!("    {:25} range=[{:5}, {:5}]  neutral={:.1}",
-                c.name, c.lo, c.hi, c.neutral);
+            println!(
+                "    {:25} range=[{:5}, {:5}]  neutral={:.1}",
+                c.name, c.lo, c.hi, c.neutral
+            );
         }
         if self.results.is_empty() {
             println!("    (no results — run check_all first)");
@@ -275,12 +298,20 @@ impl FluxVmBridge {
             let violated = self.results.len() - passed;
             println!("  Results: {} passed, {} violated", passed, violated);
             for r in &self.results {
-                let status = if r.passed { "✓ pass" } else { "✗ violation" };
-                let sev = if r.passed { "".to_string() } else {
+                let status = if r.passed {
+                    "✓ pass"
+                } else {
+                    "✗ violation"
+                };
+                let sev = if r.passed {
+                    "".to_string()
+                } else {
                     format!("{:?}", r.severity)
                 };
-                println!("    {:25} = {:5}  curv={:.3}  {} {}",
-                    r.name, r.value, r.curvature, status, sev);
+                println!(
+                    "    {:25} = {:5}  curv={:.3}  {} {}",
+                    r.name, r.value, r.curvature, status, sev
+                );
             }
         }
     }
@@ -395,15 +426,15 @@ mod tests {
         bridge.load_maritime();
 
         bridge.check_all(&[
-            ("wave_height_dm", 35_i32),  // pass
-            ("wave_height_dm", 130_i32), // violation (critical)
+            ("wave_height_dm", 35_i32),   // pass
+            ("wave_height_dm", 130_i32),  // violation (critical)
             ("sea_temp_celsius", 12_i32), // pass
         ]);
 
         let (snaps, inferences) = bridge.surface_at(Dial::soft());
         // At soft: passed checks → snaps, violations → inferences
         assert!(snaps.len() >= 2);
-        assert!(inferences.len() >= 1);
+        assert!(!inferences.is_empty());
     }
 
     #[test]

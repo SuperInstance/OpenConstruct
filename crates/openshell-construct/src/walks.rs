@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::residency::{WalkLog, WalkRecord};
 
-/// A chain checkpoint line: the persisted chain head ("prev_chain")
+/// A chain checkpoint line: the persisted chain head ("`prev_chain`")
 /// covering exactly the first `records` walk lines of the file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CheckpointLine {
@@ -101,7 +101,10 @@ impl WalkRecorder {
     pub fn record(&mut self, record: WalkRecord) -> io::Result<[u8; 32]> {
         let walk_line = serde_json::to_vec(&record).expect("walk record serializes");
         let head = self.log.append(record);
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         file.write_all(&walk_line)?;
         file.write_all(b"\n")?;
         write_checkpoint(&mut file, &head, self.log.records().len())?;
@@ -151,7 +154,9 @@ impl WalkRecorder {
                 heads.push(log.append(record));
             } else if let Ok(cp) = serde_json::from_str::<CheckpointLine>(&line) {
                 match decode_hex32(&cp.chain_head) {
-                    Some(head) => checkpoints.push((usize::try_from(cp.records).unwrap_or(usize::MAX), head)),
+                    Some(head) => {
+                        checkpoints.push((usize::try_from(cp.records).unwrap_or(usize::MAX), head));
+                    }
                     None => skipped += 1,
                 }
             } else {
@@ -183,7 +188,7 @@ impl WalkRecorder {
         }
 
         Ok(LoadOutcome {
-            recorder: WalkRecorder {
+            recorder: Self {
                 path: path.as_ref().to_path_buf(),
                 log,
             },
@@ -209,9 +214,11 @@ fn write_checkpoint(file: &mut fs::File, head: &[u8; 32], records: usize) -> io:
 
 /// Lowercase hex encoding (shared with the growth record).
 pub(crate) fn encode_hex(bytes: &[u8]) -> String {
+    use std::fmt::Write as _;
+
     let mut out = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
-        out.push_str(&format!("{byte:02x}"));
+        let _ = write!(out, "{byte:02x}");
     }
     out
 }
@@ -269,7 +276,10 @@ mod tests {
         assert!(!outcome.report.chain_broken);
         assert_eq!(outcome.recorder.log().records().len(), 3);
         assert_eq!(outcome.recorder.log().head(), head);
-        assert!(outcome.recorder.log().verify(), "loaded chain must be intact");
+        assert!(
+            outcome.recorder.log().verify(),
+            "loaded chain must be intact"
+        );
 
         let _ = fs::remove_file(&path);
     }
@@ -290,9 +300,15 @@ mod tests {
         fs::write(&path, lines.join("\n") + "\n").unwrap();
 
         let outcome = WalkRecorder::load(&path).unwrap();
-        assert_eq!(outcome.report.skipped_malformed, 1, "damage is counted, not fatal");
+        assert_eq!(
+            outcome.report.skipped_malformed, 1,
+            "damage is counted, not fatal"
+        );
         assert_eq!(outcome.report.records_loaded, 2);
-        assert!(outcome.report.chain_broken, "checkpoints pin 3 walks; only 2 survive");
+        assert!(
+            outcome.report.chain_broken,
+            "checkpoints pin 3 walks; only 2 survive"
+        );
         assert!(!outcome.recorder.log().verify());
 
         let _ = fs::remove_file(&path);
@@ -315,7 +331,10 @@ mod tests {
         assert_eq!(outcome.report.records_loaded, 3);
         assert_eq!(outcome.report.skipped_malformed, 0);
         assert_eq!(outcome.report.checkpoints_verified, 0);
-        assert!(!outcome.report.chain_broken, "nothing persisted, nothing to check");
+        assert!(
+            !outcome.report.chain_broken,
+            "nothing persisted, nothing to check"
+        );
         assert!(outcome.recorder.log().verify());
 
         let _ = fs::remove_file(&path);
@@ -370,7 +389,10 @@ mod tests {
 
         let outcome = WalkRecorder::load(&path).unwrap();
         assert_eq!(outcome.report.records_loaded, 2);
-        assert!(outcome.report.chain_broken, "a walk without its checkpoint is a broken tail");
+        assert!(
+            outcome.report.chain_broken,
+            "a walk without its checkpoint is a broken tail"
+        );
         assert!(!outcome.recorder.log().verify());
 
         let _ = fs::remove_file(&path);

@@ -8,7 +8,7 @@
 //! Note: Run `cargo bench` from the crate directory, or use:
 //!   cargo bench -p openshell-signal-chain
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use openshell_signal_chain::{Dial, Room, SignalChain};
 
 /// Pre-populate a room with snaps and inferences for benchmarking
@@ -21,7 +21,7 @@ fn setup_room(item_count: usize, inference_ratio: f64) -> Room {
     for i in 0..snap_count {
         room.add_snap(
             serde_json::json!({"id": i, "type": "snap", "value": i as f64 * 1.5}),
-            1.0
+            1.0,
         );
     }
 
@@ -29,7 +29,7 @@ fn setup_room(item_count: usize, inference_ratio: f64) -> Room {
         let confidence = (i as f64) / (inference_count as f64);
         room.add_inference(
             serde_json::json!({"id": i, "type": "inference", "hypothesis": format!("h-{}", i)}),
-            confidence.max(0.1)
+            confidence.max(0.1),
         );
     }
 
@@ -43,15 +43,9 @@ fn setup_chain(room_count: usize, items_per_room: usize) -> SignalChain {
     for r in 0..room_count {
         let room = chain.room(&format!("room-{}", r));
         for i in 0..items_per_room {
-            room.add_snap(
-                serde_json::json!({"room": r, "id": i}),
-                1.0
-            );
+            room.add_snap(serde_json::json!({"room": r, "id": i}), 1.0);
             if i % 2 == 0 {
-                room.add_inference(
-                    serde_json::json!({"room": r, "id": i, "inf": true}),
-                    0.7
-                );
+                room.add_inference(serde_json::json!({"room": r, "id": i, "inf": true}), 0.7);
             }
         }
     }
@@ -67,7 +61,7 @@ fn bench_room_add_snap(c: &mut Criterion) {
                 for i in 0..100 {
                     room.add_snap(
                         black_box(serde_json::json!({"id": i, "data": format!("value-{}", i)})),
-                        1.0
+                        1.0,
                     );
                 }
             });
@@ -80,7 +74,7 @@ fn bench_room_add_snap(c: &mut Criterion) {
                 for i in 0..100 {
                     room.add_inference(
                         black_box(serde_json::json!({"id": i, "hyp": format!("h-{}", i)})),
-                        0.5 + (i as f64) * 0.005
+                        0.5 + (i as f64) * 0.005,
                     );
                 }
             });
@@ -93,15 +87,10 @@ fn bench_room_query(c: &mut Criterion) {
     for size in [10, 50, 100, 500].iter() {
         let room = setup_room(*size, 0.5);
 
-        group.bench_with_input(
-            BenchmarkId::from_parameter(size), size,
-            |b, &size| {
-                let dial = Dial::new(0.5);
-                b.iter(|| {
-                    black_box(room.query(black_box(dial)))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_size| {
+            let dial = Dial::new(0.5);
+            b.iter(|| black_box(room.query(black_box(dial))));
+        });
     }
 
     group.finish();
@@ -131,10 +120,18 @@ fn bench_room_cascade(c: &mut Criterion) {
                 let mut child3 = Room::new("child3");
 
                 // Build tree
-                child1.children.insert("child1a".to_string(), Room::new("child1a"));
-                child1.children.insert("child1b".to_string(), Room::new("child1b"));
-                child2.children.insert("child2a".to_string(), Room::new("child2a"));
-                child3.children.insert("child3a".to_string(), Room::new("child3a"));
+                child1
+                    .children
+                    .insert("child1a".to_string(), Room::new("child1a"));
+                child1
+                    .children
+                    .insert("child1b".to_string(), Room::new("child1b"));
+                child2
+                    .children
+                    .insert("child2a".to_string(), Room::new("child2a"));
+                child3
+                    .children
+                    .insert("child3a".to_string(), Room::new("child3a"));
 
                 root.children.insert("child1".to_string(), child1);
                 root.children.insert("child2".to_string(), child2);
@@ -144,11 +141,12 @@ fn bench_room_cascade(c: &mut Criterion) {
                 for i in 0..10 {
                     root.add_inference(
                         serde_json::json!({"hyp": format!("h-{}", i)}),
-                        0.6 + (i as f64) * 0.04
+                        0.6 + (i as f64) * 0.04,
                     );
                 }
 
-                black_box(root.cascade(black_box(3)));
+                root.cascade(black_box(3));
+                black_box(());
             });
         });
 }
@@ -185,10 +183,11 @@ fn bench_room_children(c: &mut Criterion) {
             b.iter(|| {
                 let mut room = Room::new("parent");
                 for i in 0..20 {
-                    room.children.insert(format!("child-{}", i), Room::new(&format!("child-{}", i)));
+                    room.children
+                        .insert(format!("child-{}", i), Room::new(&format!("child-{}", i)));
                 }
                 // Query all children
-                for (_, child) in &room.children {
+                for child in room.children.values() {
                     black_box(child.query_snaps());
                 }
             });

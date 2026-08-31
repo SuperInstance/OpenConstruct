@@ -113,8 +113,7 @@ fn neutral_walk(ts: u64, gateway: bool) -> WalkRecord {
 fn now_secs() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
+        .map_or(0, |d| d.as_secs())
 }
 
 /// Grow-or-load the sandbox's room and spawn its supervision loop.
@@ -124,7 +123,7 @@ fn now_secs() -> u64 {
 /// consult it (see `proxy::InferenceContext`), or `None` when residency
 /// is unavailable (no id, or the room file refused to load — a tampered
 /// chain disables residency rather than running over evidence).
-pub(crate) fn spawn_residency(
+pub fn spawn_residency(
     sandbox_id: &str,
     gateway_endpoint: Option<&str>,
 ) -> Option<Arc<RoomResidency>> {
@@ -182,7 +181,7 @@ pub(crate) fn spawn_residency(
     );
 
     let tick_room = Arc::clone(&residency);
-    let tick_room_id = room_id.clone();
+    let tick_room_id = room_id;
     let gateway = gateway_endpoint.is_some();
     tokio::spawn(async move {
         let mut tick = tokio::time::interval(Duration::from_secs(config.tick_secs));
@@ -216,13 +215,13 @@ mod tests {
     fn neutral_walk_names_the_transport_and_carries_the_gap() {
         let gateway = neutral_walk(1_000, true);
         assert_eq!(gateway.road, "gateway");
-        assert_eq!(gateway.link_quality, 0.5);
+        assert!((gateway.link_quality - NEUTRAL_LINK_QUALITY).abs() < f32::EPSILON);
         assert_eq!(gateway.ts, 1_000);
         assert!(gateway.arrival_meta.is_none());
 
         let local = neutral_walk(1_000, false);
         assert_eq!(local.road, "local");
-        assert_eq!(local.link_quality, 0.5);
+        assert!((local.link_quality - NEUTRAL_LINK_QUALITY).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -239,7 +238,10 @@ mod tests {
     fn gravity_parses_default_and_filters_non_finite() {
         assert!((parse_gravity(None) - 0.5).abs() < 1e-9);
         assert!((parse_gravity(Some("0.9")) - 0.9).abs() < 1e-9);
-        assert!((parse_gravity(Some("2")) - 2.0).abs() < 1e-9, "modulate clamps");
+        assert!(
+            (parse_gravity(Some("2")) - 2.0).abs() < 1e-9,
+            "modulate clamps"
+        );
         assert!(
             (parse_gravity(Some("NaN")) - 0.5).abs() < 1e-9,
             "NaN parses as the default"
@@ -249,9 +251,18 @@ mod tests {
 
     #[test]
     fn dir_parses_default_none_and_override() {
-        assert_eq!(parse_dir(None), Some(PathBuf::from("/var/log/openshell-rooms")));
-        assert_eq!(parse_dir(Some("")), Some(PathBuf::from("/var/log/openshell-rooms")));
+        assert_eq!(
+            parse_dir(None),
+            Some(PathBuf::from("/var/log/openshell-rooms"))
+        );
+        assert_eq!(
+            parse_dir(Some("")),
+            Some(PathBuf::from("/var/log/openshell-rooms"))
+        );
         assert_eq!(parse_dir(Some("none")), None);
-        assert_eq!(parse_dir(Some("/tmp/rooms")), Some(PathBuf::from("/tmp/rooms")));
+        assert_eq!(
+            parse_dir(Some("/tmp/rooms")),
+            Some(PathBuf::from("/tmp/rooms"))
+        );
     }
 }

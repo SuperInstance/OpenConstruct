@@ -15,7 +15,7 @@ pub const DEFAULT_ROUTE_TIMEOUT: Duration = Duration::from_secs(60);
 ///
 /// Controls how the router selects and queries inference endpoints.
 /// Maps to signal-chain dial positions for multi-level inference.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum InferenceLevel {
     /// Pure formal reasoning — theorem provers, FLUX ISA, H1 cohomology
     /// Dial position: 0.0
@@ -47,28 +47,28 @@ impl InferenceLevel {
     /// Convert to dial position (0.0 hard to 1.0 soft)
     pub fn dial_position(&self) -> f64 {
         match self {
-            InferenceLevel::Formal => 0.0,
-            InferenceLevel::Bathy => 0.1,
-            InferenceLevel::Commit => 0.05,
-            InferenceLevel::Analysis => 0.4,
-            InferenceLevel::Review => 0.5,
-            InferenceLevel::Extrapolate => 0.7,
-            InferenceLevel::Creative => 0.9,
-            InferenceLevel::Exploratory => 1.0,
+            Self::Formal => 0.0,
+            Self::Bathy => 0.1,
+            Self::Commit => 0.05,
+            Self::Analysis => 0.4,
+            Self::Review => 0.5,
+            Self::Extrapolate => 0.7,
+            Self::Creative => 0.9,
+            Self::Exploratory => 1.0,
         }
     }
 
     /// Get the corresponding signal-chain dial preset name
     pub fn dial_name(&self) -> &'static str {
         match self {
-            InferenceLevel::Formal => "DIAL_FORMAL",
-            InferenceLevel::Bathy => "DIAL_BATHY",
-            InferenceLevel::Commit => "DIAL_COMMIT",
-            InferenceLevel::Analysis => "DIAL_ANALYSIS",
-            InferenceLevel::Review => "DIAL_REVIEW",
-            InferenceLevel::Extrapolate => "DIAL_EXTRAPOLATE",
-            InferenceLevel::Creative => "DIAL_CREATIVE",
-            InferenceLevel::Exploratory => "DIAL_EXPLORATORY",
+            Self::Formal => "DIAL_FORMAL",
+            Self::Bathy => "DIAL_BATHY",
+            Self::Commit => "DIAL_COMMIT",
+            Self::Analysis => "DIAL_ANALYSIS",
+            Self::Review => "DIAL_REVIEW",
+            Self::Extrapolate => "DIAL_EXTRAPOLATE",
+            Self::Creative => "DIAL_CREATIVE",
+            Self::Exploratory => "DIAL_EXPLORATORY",
         }
     }
 }

@@ -28,11 +28,11 @@
 //! assert_eq!(soft.len(), 2);
 //! ```
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
+use super::{Dial, Inference, Snap};
 use crate::query::QueryResult;
-use super::{Dial, Snap, Inference};
 
 /// A room is a tile in the signal chain — a fact-space with snaps, inferences,
 /// and a dial position.
@@ -218,9 +218,14 @@ impl Room {
     /// room.add_inference(serde_json::json!({"next": "rain"}), 0.7);
     /// assert_eq!(room.inferences.len(), 1);
     /// ```
-    pub fn add_inference(&mut self, hypothesis: serde_json::Value, confidence: f64) -> &mut Inference {
+    pub fn add_inference(
+        &mut self,
+        hypothesis: serde_json::Value,
+        confidence: f64,
+    ) -> &mut Inference {
         let pos = self.dial_position.position;
-        self.inferences.push(Inference::new(hypothesis, confidence, pos));
+        self.inferences
+            .push(Inference::new(hypothesis, confidence, pos));
         self.inferences.last_mut().unwrap()
     }
 
@@ -254,10 +259,8 @@ impl Room {
     pub fn query(&self, dial: Dial) -> Vec<serde_json::Value> {
         let threshold = dial.inference_threshold();
 
-        let mut results: Vec<serde_json::Value> = self.snaps
-            .iter()
-            .map(|s| s.fact.clone())
-            .collect();
+        let mut results: Vec<serde_json::Value> =
+            self.snaps.iter().map(|s| s.fact.clone()).collect();
 
         for inf in &self.inferences {
             if inf.confidence >= threshold {
@@ -321,7 +324,8 @@ impl Room {
     pub fn query_tagged(&self, dial: Dial) -> Vec<QueryResult> {
         let threshold = dial.inference_threshold();
 
-        let mut results: Vec<QueryResult> = self.snaps
+        let mut results: Vec<QueryResult> = self
+            .snaps
             .iter()
             .map(|s| QueryResult::Snap(s.fact.clone()))
             .collect();
@@ -404,16 +408,24 @@ impl Room {
     /// assert_eq!(child.snaps[0].confidence, 0.9 * 0.8);
     /// ```
     pub fn cascade(&mut self, depth: usize) {
-        if depth == 0 { return; }
+        if depth == 0 {
+            return;
+        }
 
         // Sort inferences by confidence descending, take top 2 with confidence > 0.5
-        let mut sorted: Vec<&Inference> = self.inferences.iter()
+        let mut sorted: Vec<&Inference> = self
+            .inferences
+            .iter()
             .filter(|inf| inf.confidence > 0.5)
             .collect();
-        sorted.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        sorted.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         let top_inferences: Vec<&Inference> = sorted.into_iter().take(2).collect();
 
-        for (_name, child) in &mut self.children {
+        for child in self.children.values_mut() {
             for inf in &top_inferences {
                 let mut snap_fact = inf.hypothesis.clone();
                 if let Some(obj) = snap_fact.as_object_mut() {
@@ -472,7 +484,9 @@ mod tests {
         parent.add_inference(serde_json::json!({"mid": true}), 0.7);
         parent.add_inference(serde_json::json!({"noise": true}), 0.3); // below 0.5, should be excluded
 
-        parent.children.insert("child".to_string(), Room::new("child"));
+        parent
+            .children
+            .insert("child".to_string(), Room::new("child"));
         parent.cascade(1);
 
         let child = parent.children.get("child").unwrap();
@@ -485,7 +499,9 @@ mod tests {
     #[test]
     fn test_cascade_empty_room() {
         let mut parent = Room::new("parent");
-        parent.children.insert("child".to_string(), Room::new("child"));
+        parent
+            .children
+            .insert("child".to_string(), Room::new("child"));
         parent.cascade(1);
 
         let child = parent.children.get("child").unwrap();

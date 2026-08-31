@@ -28,7 +28,12 @@ use crate::room::{Room, RoomError};
 
 /// The `room grow` verb: grow a room from `seed` and `charter` at
 /// `creation_tick`, save it to `out`, and return the onboarding document.
-pub fn grow_room(seed: &str, charter: &str, creation_tick: u64, out: &Path) -> Result<String, RoomError> {
+pub fn grow_room(
+    seed: &str,
+    charter: &str,
+    creation_tick: u64,
+    out: &Path,
+) -> Result<String, RoomError> {
     let (room, doc) = Room::grow(seed.as_bytes(), charter, creation_tick);
     room.save(out)?;
     Ok(doc)
@@ -51,11 +56,21 @@ pub fn walk_room(file: &Path, road: &str, link_quality: f32, ts: u64) -> Result<
 
     let mut out = String::new();
     if reading.novel_road_detected {
-        let _ = writeln!(out, "heat: {} (novel road — held without verdict)", reading.state.label());
+        let _ = writeln!(
+            out,
+            "heat: {} (novel road — held without verdict)",
+            reading.state.label()
+        );
     } else {
         let _ = writeln!(out, "heat: {}", reading.state.label());
     }
-    let _ = write!(out, "prior: {} ({:.2}) — {}", reason_label(prior.reason), prior.urgency, prior.detail);
+    let _ = write!(
+        out,
+        "prior: {} ({:.2}) — {}",
+        reason_label(prior.reason),
+        prior.urgency,
+        prior.detail
+    );
     Ok(out)
 }
 

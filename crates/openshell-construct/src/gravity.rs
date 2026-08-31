@@ -10,10 +10,10 @@
 //! room's heat into concrete model parameters.
 //!
 //! The mapping table, verbatim (`g` = gravity clamped to `[0, 1]`;
-//! temperature and max_tokens are linear in `g`; style is the heat's
-//! voice and does not bend with gravity):
+//! temperature and `max_tokens` are linear in `g`; `prompt_style` is the
+//! heat's voice and does not bend with gravity):
 //!
-//! | heat    | temperature (g=0 → g=1) | max_tokens (g=0 → g=1) | prompt_style |
+//! | heat    | temperature (g=0 → g=1) | `max_tokens` (g=0 → g=1) | `prompt_style` |
 //! |---------|-------------------------|------------------------|--------------|
 //! | warm    | 1.20 → 0.40             | 4096 → 1024            | "expansive"  |
 //! | cooling | 0.80 → 0.30             | 3072 →  768            | "measured"   |
@@ -55,14 +55,17 @@ pub fn modulate(gravity: f64, heat: HeatState) -> ModelParams {
     // Lane per heat: (temperature hi → lo, max_tokens hi → lo, style),
     // exactly the mapping table in the module docs.
     let (temp_hi, temp_lo, tok_hi, tok_lo, style) = match heat {
-        HeatState::Warm => (1.20, 0.40, 4096_u32, 1024_u32, "expansive"),
+        HeatState::Warm => (1.20_f64, 0.40_f64, 4096_u32, 1024_u32, "expansive"),
         HeatState::Cooling => (0.80, 0.30, 3072, 768, "measured"),
         HeatState::Cold => (0.40, 0.20, 2048, 512, "terse"),
     };
 
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     ModelParams {
-        temperature: temp_hi - (temp_hi - temp_lo) * g,
-        max_tokens: (f64::from(tok_hi) - f64::from(tok_hi - tok_lo) * g).round() as u32,
+        temperature: (temp_hi - temp_lo).mul_add(-g, temp_hi),
+        max_tokens: f64::from(tok_hi - tok_lo)
+            .mul_add(-g, f64::from(tok_hi))
+            .round() as u32,
         prompt_style: style,
     }
 }
@@ -121,8 +124,14 @@ mod tests {
             let mut prev = modulate(0.0, heat);
             for g in [0.25_f64, 0.5, 0.75, 1.0] {
                 let now = modulate(g, heat);
-                assert!(now.temperature < prev.temperature, "temp falls as gravity rises");
-                assert!(now.max_tokens <= prev.max_tokens, "budget tightens as gravity rises");
+                assert!(
+                    now.temperature < prev.temperature,
+                    "temp falls as gravity rises"
+                );
+                assert!(
+                    now.max_tokens <= prev.max_tokens,
+                    "budget tightens as gravity rises"
+                );
                 prev = now;
             }
         }

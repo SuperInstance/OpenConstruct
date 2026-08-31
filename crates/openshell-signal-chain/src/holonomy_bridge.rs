@@ -28,8 +28,8 @@
 //! - **β₁ = V - 2**: Exactly rigid (Laman's theorem) — optimal
 //! - **β₁ > V - 2**: Over-constrained — emergence detected
 
-use serde::{Deserialize, Serialize};
 use crate::Dial;
+use serde::{Deserialize, Serialize};
 
 /// Holonomy room status — mirrors ConsensusResult from holonomy-consensus.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -168,9 +168,9 @@ impl HolonomyRoom {
             }
         } else if self.inference_count > 0 && self.dial.position < 0.25 {
             HolonomyStatus::Pending((0..self.inference_count).collect())
-        } else if self.snap_count == 0 && self.inference_count == 0 {
-            HolonomyStatus::Verified // empty room = trivially verified
         } else {
+            // Empty rooms are trivially verified; rooms whose inferences
+            // all clear the dial are verified outright.
             HolonomyStatus::Verified
         }
     }
@@ -204,6 +204,11 @@ impl HolonomyChain {
             name: name.to_string(),
             rooms: Vec::new(),
         }
+    }
+
+    /// The chain's name.
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     /// Add a holonomy room to the chain.
@@ -296,18 +301,26 @@ mod tests {
     #[test]
     fn test_holonomy_chain() {
         let mut chain = HolonomyChain::new("fleet");
-        
+
         let mut room1 = HolonomyRoom::new("room1", Dial::hard());
-        for _ in 0..5 { room1.add_snap(); }
-        for _ in 0..7 { room1.add_edge(); }
-        
+        for _ in 0..5 {
+            room1.add_snap();
+        }
+        for _ in 0..7 {
+            room1.add_edge();
+        }
+
         let mut room2 = HolonomyRoom::new("room2", Dial::soft());
-        for _ in 0..3 { room2.add_snap(); }
-        for _ in 0..4 { room2.add_edge(); }
-        
+        for _ in 0..3 {
+            room2.add_snap();
+        }
+        for _ in 0..4 {
+            room2.add_edge();
+        }
+
         chain.add_room(room1);
         chain.add_room(room2);
-        
+
         assert_eq!(chain.rigid_rooms(), vec!["room1".to_string()]);
         assert_eq!(chain.total_vertices(), 8);
         assert_eq!(chain.total_edges(), 11);

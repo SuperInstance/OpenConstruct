@@ -25,7 +25,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::residency::{heat, novel_road_against_cold, windowed, HeatState, WalkLog};
+use crate::residency::{HeatState, WalkLog, heat, novel_road_against_cold, windowed};
 
 /// The attention urgency of a novel road after sustained cold — the most
 /// informative event in the room's life (RFC 0004, §2).
@@ -51,7 +51,7 @@ pub enum AttentionReason {
     /// A novel road arrived after sustained cold (the cold-cell anomaly).
     NovelRoad,
     /// The walks file's recomputed chain disagrees with its persisted
-    /// prev_chain — edited, truncated, or corrupted between restarts.
+    /// `prev_chain` — edited, truncated, or corrupted between restarts.
     ChainBreak,
     /// Nothing worth correlating.
     None,
@@ -164,6 +164,8 @@ fn coldness(state: HeatState) -> u8 {
 }
 
 #[cfg(test)]
+// Urgency asserts pin the ladder constants verbatim (no arithmetic).
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
     use crate::residency::WalkRecord;
@@ -266,7 +268,10 @@ mod tests {
         let mut log = log_of(cold_walks());
         assert!(log.verify());
         log.expect_chain_head([0xAB; 32]);
-        assert!(!log.verify(), "a pinned head that disagrees breaks the chain");
+        assert!(
+            !log.verify(),
+            "a pinned head that disagrees breaks the chain"
+        );
 
         let p = prior(&log, usize::MAX);
         assert_eq!(p.reason, AttentionReason::ChainBreak);

@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo bench -p openshell-signal-chain --bench cascade
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use openshell_signal_chain::{Room, SignalChain};
 
 /// Build a room tree of given depth and branching factor, with n inferences at the root.
@@ -40,7 +40,7 @@ fn bench_cascade_depth(c: &mut Criterion) {
     let mut group = c.benchmark_group("cascade_depth");
 
     for depth in [1usize, 2, 3].iter() {
-        let mut root = build_tree(*depth, 3, 5);
+        let root = build_tree(*depth, 3, 5);
         group.bench_with_input(BenchmarkId::from_parameter(depth), depth, |b, &depth| {
             b.iter(|| {
                 let mut r = root.clone();
@@ -81,10 +81,7 @@ fn bench_cascade_from_chain(c: &mut Criterion) {
                 let mut chain = SignalChain::new("bench");
                 let root = chain.room("root");
                 for i in 0..5 {
-                    root.add_inference(
-                        serde_json::json!({"i": i}),
-                        0.6 + i as f64 * 0.06,
-                    );
+                    root.add_inference(serde_json::json!({"i": i}), 0.6 + i as f64 * 0.06);
                 }
                 // Add children directly to root's Room.children
                 let root_room = chain.rooms.get_mut("root").unwrap();

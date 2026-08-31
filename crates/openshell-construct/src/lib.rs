@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-//! **openshell-construct** — The OpenConstruct onboarding engine.
+//! **openshell-construct** — The `OpenConstruct` onboarding engine.
 //!
 //! Defines the data structures for the five-phase onboarding flow:
 //!
-//! 1. **SelfDeclaration** — the agent declares its identity, model, and capabilities.
-//! 2. **ModuleSelection** — pick modules from the registry to adopt.
-//! 3. **InterfaceSelection** — choose interface preferences (CLI, TUI, API, etc.).
-//! 4. **ConnectionSetup** — configure external connections (APIs, databases, services).
-//! 5. **EnvironmentGeneration** — produce the final `OnboardingConfig`.
+//! 1. **`SelfDeclaration`** — the agent declares its identity, model, and capabilities.
+//! 2. **`ModuleSelection`** — pick modules from the registry to adopt.
+//! 3. **`InterfaceSelection`** — choose interface preferences (CLI, TUI, API, etc.).
+//! 4. **`ConnectionSetup`** — configure external connections (APIs, databases, services).
+//! 5. **`EnvironmentGeneration`** — produce the final `OnboardingConfig`.
 //!
 //! It also grows the room-native residency layer (RFC 0004, *The Room
 //! Grows a Mask*): rooms derive a [`RoomMask`] at creation, record walks
@@ -35,14 +35,14 @@ pub mod room;
 pub mod runtime;
 pub mod walks;
 
-pub use ensign::{prior, AttentionPrior, AttentionReason};
-pub use gravity::{modulate, ModelParams};
+pub use ensign::{AttentionPrior, AttentionReason, prior};
+pub use gravity::{ModelParams, modulate};
+pub use growth::{GrowthRecord, onboard};
 pub use hooks::{HooksRegistry, NoopHooks, RoomHooks};
-pub use growth::{onboard, GrowthRecord};
-pub use mask::{derive_mask, MaskChannel, RoomMask};
-pub use residency::{heat, HeatReading, HeatState, WalkLog, WalkRecord};
-pub use room::{Room, RoomError, ROOM_FILE_FORMAT, ROOM_WINDOW};
-pub use runtime::{seed_for_sandbox, RoomResidency, DEFAULT_SANDBOX_CHARTER};
+pub use mask::{MaskChannel, RoomMask, derive_mask};
+pub use residency::{HeatReading, HeatState, WalkLog, WalkRecord, heat};
+pub use room::{ROOM_FILE_FORMAT, ROOM_WINDOW, Room, RoomError};
+pub use runtime::{DEFAULT_SANDBOX_CHARTER, RoomResidency, seed_for_sandbox};
 pub use walks::{LoadOutcome, LoadReport, WalkRecorder};
 
 /// The five onboarding phases.
@@ -62,30 +62,30 @@ pub enum Phase {
 
 impl Phase {
     /// Return all phases in order.
-    pub fn all() -> &'static [Phase] {
+    pub fn all() -> &'static [Self] {
         &[
-            Phase::SelfDeclaration,
-            Phase::ModuleSelection,
-            Phase::InterfaceSelection,
-            Phase::ConnectionSetup,
-            Phase::EnvironmentGeneration,
+            Self::SelfDeclaration,
+            Self::ModuleSelection,
+            Self::InterfaceSelection,
+            Self::ConnectionSetup,
+            Self::EnvironmentGeneration,
         ]
     }
 
     /// Advance to the next phase, returning `None` if already at the end.
-    pub fn next(self) -> Option<Phase> {
+    pub fn next(self) -> Option<Self> {
         match self {
-            Phase::SelfDeclaration => Some(Phase::ModuleSelection),
-            Phase::ModuleSelection => Some(Phase::InterfaceSelection),
-            Phase::InterfaceSelection => Some(Phase::ConnectionSetup),
-            Phase::ConnectionSetup => Some(Phase::EnvironmentGeneration),
-            Phase::EnvironmentGeneration => None,
+            Self::SelfDeclaration => Some(Self::ModuleSelection),
+            Self::ModuleSelection => Some(Self::InterfaceSelection),
+            Self::InterfaceSelection => Some(Self::ConnectionSetup),
+            Self::ConnectionSetup => Some(Self::EnvironmentGeneration),
+            Self::EnvironmentGeneration => None,
         }
     }
 }
 
 /// How the agent identifies itself during onboarding.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AgentIdentity {
     /// Chosen name for the agent.
     pub name: String,
@@ -102,7 +102,7 @@ pub struct AgentIdentity {
 }
 
 /// An external connection configured during Phase 4.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Connection {
     /// Connection label (e.g. `"github"`, `"postgres"`).
     pub label: String,
@@ -115,7 +115,7 @@ pub struct Connection {
 }
 
 /// Interface preferences selected during Phase 3.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InterfacePreferences {
     /// Preferred primary interface (e.g. `"cli"`, `"tui"`, `"api"`, `"discord"`).
     pub primary: String,
@@ -174,18 +174,17 @@ impl OnboardingSession {
                     return Err("agent identity must be set before leaving SelfDeclaration".into());
                 }
             }
-            Phase::ModuleSelection => {
-                // Modules are optional; no validation needed.
-            }
             Phase::InterfaceSelection => {
                 if self.interface_prefs.is_none() {
-                    return Err("interface preferences must be set before leaving InterfaceSelection".into());
+                    return Err(
+                        "interface preferences must be set before leaving InterfaceSelection"
+                            .into(),
+                    );
                 }
             }
-            Phase::ConnectionSetup => {
-                // Connections are optional.
+            Phase::ModuleSelection | Phase::ConnectionSetup | Phase::EnvironmentGeneration => {
+                // Optional phases; no validation needed.
             }
-            Phase::EnvironmentGeneration => {}
         }
 
         self.phase = next;

@@ -27,9 +27,9 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::ensign::prior;
-use crate::growth::{onboard, GrowthRecord};
+use crate::growth::{GrowthRecord, onboard};
 use crate::mask::RoomMask;
-use crate::residency::{heat, HeatReading, WalkLog, WalkRecord};
+use crate::residency::{HeatReading, WalkLog, WalkRecord, heat};
 use crate::walks::{decode_hex32, encode_hex};
 
 /// Domain-separation prefix for the room-id derivation.
@@ -169,8 +169,7 @@ impl Room {
             walks: self.walklog.records().to_vec(),
             chain: ChainCheckpoint {
                 head: encode_hex(&self.walklog.head()),
-                records: u64::try_from(self.walklog.records().len())
-                    .expect("walk count fits u64"),
+                records: u64::try_from(self.walklog.records().len()).expect("walk count fits u64"),
             },
         };
         let json = serde_json::to_vec_pretty(&file)?;
@@ -201,8 +200,12 @@ impl Room {
         }
 
         // The chain: rebuild from the walks, pin the checkpointed head.
-        let declared = usize::try_from(file.chain.records)
-            .map_err(|_| RoomError::Tamper(format!("record count overflows usize: {}", file.chain.records)))?;
+        let declared = usize::try_from(file.chain.records).map_err(|_| {
+            RoomError::Tamper(format!(
+                "record count overflows usize: {}",
+                file.chain.records
+            ))
+        })?;
         if declared != file.walks.len() {
             return Err(RoomError::Tamper(format!(
                 "chain pins {} walks but the file carries {}",
@@ -211,7 +214,10 @@ impl Room {
             )));
         }
         let expected_head = decode_hex32(&file.chain.head).ok_or_else(|| {
-            RoomError::Tamper(format!("chain head is not 64-char hex: `{}`", file.chain.head))
+            RoomError::Tamper(format!(
+                "chain head is not 64-char hex: `{}`",
+                file.chain.head
+            ))
         })?;
         let mut walklog = WalkLog::new();
         for walk in file.walks {
@@ -331,7 +337,10 @@ mod tests {
 
         assert!(room.id.starts_with("room-"), "id was: {}", room.id);
         assert_eq!(room.id.len(), "room-".len() + 12);
-        assert_eq!(room.mask, room.growth.mask, "the lattice and its witness agree");
+        assert_eq!(
+            room.mask, room.growth.mask,
+            "the lattice and its witness agree"
+        );
         assert!(room.mask.is_grown());
         assert!(room.growth.heat_history.is_empty());
         assert!(room.walklog.records().is_empty());
@@ -359,7 +368,10 @@ mod tests {
 
         // ...but the first tick is still a temperature: it is recorded.
         assert_eq!(room.growth.heat_history, vec![(60, HeatState::Cold)]);
-        assert!(room.walklog.verify(), "the chain pin must stay in step after a tick");
+        assert!(
+            room.walklog.verify(),
+            "the chain pin must stay in step after a tick"
+        );
     }
 
     #[test]
@@ -393,23 +405,35 @@ mod tests {
         let history = &room.growth.heat_history;
         // Exactly-once: no two adjacent entries share a state, ever.
         for pair in history.windows(2) {
-            assert_ne!(pair[0].1, pair[1].1, "adjacent history entries repeat a state: {history:?}");
+            assert_ne!(
+                pair[0].1, pair[1].1,
+                "adjacent history entries repeat a state: {history:?}"
+            );
         }
         // The last entry always matches the current reading.
         let reading = heat(room.walklog.records(), ROOM_WINDOW);
         assert_eq!(history.last().unwrap().1, reading.state);
         // The room did warm: at least one transition was recorded.
-        assert!(history.len() >= 2, "expected at least one transition: {history:?}");
+        assert!(
+            history.len() >= 2,
+            "expected at least one transition: {history:?}"
+        );
         assert_eq!(reading.state, HeatState::Warm);
 
         // Steady warm ticks after the transition add nothing more.
         let len_before = history.len();
         let (reading, _) = room.tick(rec(99_999, "north", 0.7));
         assert_eq!(reading.state, HeatState::Warm);
-        assert_eq!(room.growth.heat_history.len(), len_before, "a steady state is not a transition");
+        assert_eq!(
+            room.growth.heat_history.len(),
+            len_before,
+            "a steady state is not a transition"
+        );
     }
 
     #[test]
+    // The urgency assert pins the ladder constant verbatim (no arithmetic).
+    #[allow(clippy::float_cmp)]
     fn tick_propagates_the_ensign_prior() {
         // Sustained cold, then the 06:11 write: the cold-cell anomaly.
         let (mut room, _doc) = Room::grow(SEED, CHARTER, 0);
@@ -423,7 +447,11 @@ mod tests {
         assert!(reading.novel_road_detected);
         assert_eq!(prior.reason, AttentionReason::NovelRoad);
         assert_eq!(prior.urgency, NOVEL_ROAD_URGENCY);
-        assert!(prior.detail.contains("h-road-9"), "detail was: {}", prior.detail);
+        assert!(
+            prior.detail.contains("h-road-9"),
+            "detail was: {}",
+            prior.detail
+        );
         // And no fake transition: cold held, so history does not move.
         assert_eq!(
             room.growth.heat_history.last(),
@@ -447,7 +475,7 @@ mod tests {
 
     // ── Room file tests ─────────────────────────────────────────────
 
-    use super::{RoomError, ROOM_FILE_FORMAT};
+    use super::{ROOM_FILE_FORMAT, RoomError};
     use serde_json::Value;
     use std::fs;
     use std::path::PathBuf;
@@ -490,7 +518,10 @@ mod tests {
         let mut loaded = loaded;
         let (_, prior) = loaded.tick(rec(180, "h-road-0", 0.8));
         assert_ne!(prior.reason, AttentionReason::ChainBreak);
-        assert!(loaded.walklog.verify(), "the loaded chain must continue, not restart");
+        assert!(
+            loaded.walklog.verify(),
+            "the loaded chain must continue, not restart"
+        );
         loaded.save(&path).unwrap();
         assert_eq!(Room::load(&path).unwrap(), loaded);
 
@@ -555,12 +586,16 @@ mod tests {
 
         // Forged lattice: the mask no longer matches the growth record.
         room.save(&path).unwrap();
-        tamper_with(&path, |v| v["mask"]["channels"] = serde_json::json!(["fleet"]));
+        tamper_with(&path, |v| {
+            v["mask"]["channels"] = serde_json::json!(["fleet"]);
+        });
         assert!(matches!(Room::load(&path), Err(RoomError::Tamper(_))));
 
         // Forged seed: the id (and mask) no longer derive.
         room.save(&path).unwrap();
-        tamper_with(&path, |v| v["growth"]["seed_hex"] = Value::from("00".repeat(16)));
+        tamper_with(&path, |v| {
+            v["growth"]["seed_hex"] = Value::from("00".repeat(16));
+        });
         assert!(matches!(Room::load(&path), Err(RoomError::Tamper(_))));
 
         // Unknown format tag.

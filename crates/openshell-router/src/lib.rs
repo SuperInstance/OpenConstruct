@@ -70,7 +70,16 @@ impl Router {
         body: bytes::Bytes,
         candidates: &[ResolvedRoute],
     ) -> Result<ProxyResponse, RouterError> {
-        self.proxy_with_candidates_at_level(source_protocol, method, path, headers, body, candidates, InferenceLevel::Review).await
+        self.proxy_with_candidates_at_level(
+            source_protocol,
+            method,
+            path,
+            headers,
+            body,
+            candidates,
+            InferenceLevel::Review,
+        )
+        .await
     }
 
     /// Proxy a raw HTTP request with a specific inference level.
@@ -79,8 +88,9 @@ impl Router {
     /// allowing the router to select routes optimized for different reasoning modes.
     ///
     /// Routes are filtered by:
-    /// 1. Protocol compatibility (source_protocol must match route protocols)
+    /// 1. Protocol compatibility (`source_protocol` must match route protocols)
     /// 2. Inference level (route's level must match the requested level)
+    #[allow(clippy::too_many_arguments)]
     pub async fn proxy_with_candidates_at_level(
         &self,
         source_protocol: &str,
@@ -112,7 +122,6 @@ impl Router {
             "routing proxy inference request at inference level"
         );
 
-
         if mock::is_mock_route(route) {
             info!(endpoint = %route.endpoint, "returning mock response");
             return Ok(mock::mock_response(route, &normalized_source));
@@ -140,10 +149,20 @@ impl Router {
         body: bytes::Bytes,
         candidates: &[ResolvedRoute],
     ) -> Result<StreamingProxyResponse, RouterError> {
-        self.proxy_with_candidates_streaming_at_level(source_protocol, method, path, headers, body, candidates, InferenceLevel::Review).await
+        self.proxy_with_candidates_streaming_at_level(
+            source_protocol,
+            method,
+            path,
+            headers,
+            body,
+            candidates,
+            InferenceLevel::Review,
+        )
+        .await
     }
 
     /// Proxy with streaming and a specific inference level.
+    #[allow(clippy::too_many_arguments)]
     pub async fn proxy_with_candidates_streaming_at_level(
         &self,
         source_protocol: &str,
@@ -163,7 +182,6 @@ impl Router {
                     && r.inference_level == inference_level
             })
             .ok_or_else(|| RouterError::NoCompatibleRoute(source_protocol.to_string()))?;
-
 
         info!(
             protocols = %route.protocols.join(","),

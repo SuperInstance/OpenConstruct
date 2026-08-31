@@ -20,14 +20,20 @@ fn main() {
     // Add inferences at different confidence levels
     room.add_inference(serde_json::json!({"level": "proven", "conf": 1.0}), 1.0);
     room.add_inference(serde_json::json!({"level": "high", "conf": 0.85}), 0.85);
-    room.add_inference(serde_json::json!({"level": "medium-high", "conf": 0.7}), 0.7);
+    room.add_inference(
+        serde_json::json!({"level": "medium-high", "conf": 0.7}),
+        0.7,
+    );
     room.add_inference(serde_json::json!({"level": "medium", "conf": 0.5}), 0.5);
     room.add_inference(serde_json::json!({"level": "low", "conf": 0.3}), 0.3);
-    room.add_inference(serde_json::json!({"level": "speculative", "conf": 0.1}), 0.1);
+    room.add_inference(
+        serde_json::json!({"level": "speculative", "conf": 0.1}),
+        0.1,
+    );
 
     // Table showing dial position -> threshold -> which inferences pass
     println!("--- Dial Position to Inference Routing Table ---");
-    println!("{:<8} {:<12} {}", "Dial", "Threshold", "Accepted Inferences");
+    println!("{:<8} {:<12} Accepted Inferences", "Dial", "Threshold");
     println!("{}", "-".repeat(60));
 
     let positions = [0.0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
@@ -56,10 +62,14 @@ fn main() {
     let targets = [0.9, 0.7, 0.5, 0.3];
     for target in targets {
         let dial = dial_for_confidence(target);
-        println!("  To accept inferences with conf >= {:.1}: dial position = {:.1}",
-            target, dial.position);
-        println!("    Query result: {} inferences",
-            room.query_inferences(dial).len());
+        println!(
+            "  To accept inferences with conf >= {:.1}: dial position = {:.1}",
+            target, dial.position
+        );
+        println!(
+            "    Query result: {} inferences",
+            room.query_inferences(dial).len()
+        );
     }
 
     // Demonstrate routing use case: formal analysis (high threshold)
@@ -75,7 +85,10 @@ fn main() {
     println!("\n--- Use Case: Exploratory Analysis (Low Threshold) ---");
     let explore_dial = Dial::new(0.8); // threshold = 0.2
     let explore_results = room.query(explore_dial);
-    println!("  Exploratory (dial=0.8, threshold=0.2): {} results", explore_results.len());
+    println!(
+        "  Exploratory (dial=0.8, threshold=0.2): {} results",
+        explore_results.len()
+    );
     for r in &explore_results {
         println!("    {:?}", r);
     }
@@ -87,16 +100,18 @@ fn main() {
 
     high_conf_room.add_inference(
         serde_json::json!({"source": "high", "prediction": "confirmed"}),
-        0.95
+        0.95,
     );
     high_conf_room.add_inference(
         serde_json::json!({"source": "medium", "prediction": "maybe"}),
-        0.55
+        0.55,
     );
 
     low_conf_room.add_snap(serde_json::json!({"existing": "fact"}), 1.0);
 
-    high_conf_room.children.insert("low-confidence-target".to_string(), low_conf_room);
+    high_conf_room
+        .children
+        .insert("low-confidence-target".to_string(), low_conf_room);
     high_conf_room.cascade(1);
 
     if let Some(child) = high_conf_room.children.get("low-confidence-target") {
@@ -110,14 +125,24 @@ fn main() {
     println!("\n--- Weight-Based Result Mixing ---");
     let dial = Dial::new(0.6);
     println!("  Dial position: {:.1}", dial.position);
-    println!("  Snap weight: {:.1} (hard results count more)", dial.snap_weight());
-    println!("  Inference weight: {:.1} (soft results count more)", dial.inference_weight());
+    println!(
+        "  Snap weight: {:.1} (hard results count more)",
+        dial.snap_weight()
+    );
+    println!(
+        "  Inference weight: {:.1} (soft results count more)",
+        dial.inference_weight()
+    );
 
     let results = room.query(dial);
     let snap_count = room.query_snaps().len();
     let inference_count = results.len() - snap_count;
-    println!("  Results: {} snaps + {} inferences = {} total",
-        snap_count, inference_count, results.len());
+    println!(
+        "  Results: {} snaps + {} inferences = {} total",
+        snap_count,
+        inference_count,
+        results.len()
+    );
 
     println!("\n=== Done ===");
 }

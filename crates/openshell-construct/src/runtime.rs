@@ -47,10 +47,10 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use crate::ensign::AttentionPrior;
-use crate::gravity::{modulate, ModelParams};
+use crate::gravity::{ModelParams, modulate};
 use crate::hooks::{HooksRegistry, RoomHooks};
-use crate::residency::{heat, HeatReading, WalkRecord};
-use crate::room::{Room, RoomError, ROOM_WINDOW};
+use crate::residency::{HeatReading, WalkRecord, heat};
+use crate::room::{ROOM_WINDOW, Room, RoomError};
 
 /// Domain-separation prefix for the sandbox seed derivation.
 const ROOM_SEED_DOMAIN: &[u8] = b"openshell-construct/room-seed/v1";
@@ -179,8 +179,11 @@ impl RoomResidency {
         let room = match &persist_path {
             Some(path) if path.exists() => Room::load(path)?,
             _ => {
-                let (room, _onboarding_doc) =
-                    Room::grow(&seed_for_sandbox(sandbox_id, Some(charter)), charter, now_tick);
+                let (room, _onboarding_doc) = Room::grow(
+                    &seed_for_sandbox(sandbox_id, Some(charter)),
+                    charter,
+                    now_tick,
+                );
                 if let Some(path) = &persist_path {
                     // Best-effort first save: failure degrades to an
                     // in-memory room whose ticks keep retrying the save.
@@ -359,14 +362,21 @@ mod tests {
         impl RoomHooks for FixedHook {
             fn on_prior(&self, _: &str, _: &AttentionPrior) {}
             fn model_params(&self, _: &str) -> Option<ModelParams> {
-                Some(ModelParams { temperature: 9.9, max_tokens: 7, prompt_style: "test" })
+                Some(ModelParams {
+                    temperature: 9.9,
+                    max_tokens: 7,
+                    prompt_style: "test",
+                })
             }
         }
 
         let residency = RoomResidency::new(0.5);
         let room_id = residency.attach("sbx-grow", None, 1_000).unwrap();
 
-        assert_eq!(residency.resident_room_id().as_deref(), Some(room_id.as_str()));
+        assert_eq!(
+            residency.resident_room_id().as_deref(),
+            Some(room_id.as_str())
+        );
 
         // An unread room is cold: the model-call path gets the cold lane.
         let params = residency.model_params(&room_id).unwrap();
@@ -398,7 +408,9 @@ mod tests {
         let second = RoomResidency::with_persist_dir(0.5, Some(dir.clone()));
         let same_id = second.attach("sbx-reload", None, 999_999).unwrap();
         assert_eq!(same_id, room_id, "the loaded room keeps its identity");
-        let (reading, prior) = second.tick(&room_id, rec(180, "h-road-0", 0.8)).expect("room registered");
+        let (reading, prior) = second
+            .tick(&room_id, rec(180, "h-road-0", 0.8))
+            .expect("room registered");
         assert_ne!(prior.reason, AttentionReason::ChainBreak);
         // Two local flat walks then a varied road with a lift: cooling.
         assert_eq!(reading.state, HeatState::Cooling);
@@ -466,11 +478,17 @@ mod tests {
         for i in 0..8_u64 {
             residency.tick(&room_id, rec(i * 60, "local", 0.5));
         }
-        let (_, prior) = residency.tick(&room_id, rec(8 * 60, "h-road-9", 0.95)).expect("room registered");
+        let (_, prior) = residency
+            .tick(&room_id, rec(8 * 60, "h-road-9", 0.95))
+            .expect("room registered");
 
         assert_eq!(prior.reason, AttentionReason::NovelRoad);
         let heard = heard.lock().unwrap();
-        assert_eq!(heard.len(), 9, "every tick fires its prior, quiet ones included");
+        assert_eq!(
+            heard.len(),
+            9,
+            "every tick fires its prior, quiet ones included"
+        );
         assert_eq!(heard.last().unwrap().1, AttentionReason::NovelRoad);
         assert_eq!(heard.last().unwrap().0, room_id);
     }
@@ -519,8 +537,7 @@ mod tests {
         assert!(body["messages"].is_array());
 
         // Newer spelling wins when the caller already speaks it.
-        let mut body: Value =
-            serde_json::json!({"model": "m", "max_completion_tokens": 999_999});
+        let mut body: Value = serde_json::json!({"model": "m", "max_completion_tokens": 999_999});
         assert!(residency.apply_overrides(&room_id, &mut body));
         assert_eq!(
             body["max_completion_tokens"],
@@ -547,7 +564,9 @@ mod tests {
         std::fs::write(&blocker, b"not a dir").unwrap();
         let residency = RoomResidency::with_persist_dir(0.5, Some(blocker.join("rooms")));
         let room_id = residency.attach("sbx-degraded", None, 1_000).unwrap();
-        let (_, prior) = residency.tick(&room_id, rec(60, "local", 0.5)).expect("room registered");
+        let (_, prior) = residency
+            .tick(&room_id, rec(60, "local", 0.5))
+            .expect("room registered");
         assert_ne!(prior.reason, AttentionReason::ChainBreak);
         assert!(residency.model_params(&room_id).is_some());
         std::fs::remove_file(blocker).ok();
