@@ -4,7 +4,7 @@ name: OpenConstruct
 mission: "Agent onboarding platform — plug-and-play shell commands that create fully functional agent workspaces."
 state: active
 family: infra
-vessel: unattributed
+vessel: Lucineer
 born_from: []
 feeds: []
 owed_by: []
