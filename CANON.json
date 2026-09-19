@@ -1,0 +1,31 @@
+{
+  "canon": "1",
+  "name": "OpenConstruct",
+  "mission": "Agent onboarding platform — plug-and-play shell commands that create fully functional agent workspaces; fork of NVIDIA/OpenShell.",
+  "state": "active",
+  "family": "infrastructure",
+  "vessel": "fleet",
+  "born_from": [
+    "OpenShell"
+  ],
+  "feeds": [],
+  "owed_by": [],
+  "canonical_docs": [
+    "README.md"
+  ],
+  "ledger": "git-log",
+  "verified": "2026-09-20",
+  "schema": "fleet-canon/1",
+  "generated": "2026-09-20",
+  "generator": "canon-lint --emit-json (CCC)",
+  "agent_facing": {
+    "test_contract": {
+      "cmd": null,
+      "probe": "look for package.json / Cargo.toml / Makefile / CI workflow"
+    },
+    "key_paths": [],
+    "onboarding": [
+      "Read CANON.md, then the first canonical_doc, then run the test contract before touching anything."
+    ]
+  }
+}
