@@ -17,8 +17,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Dial, Inference, SignalChain,
     constraint::{SplineConstraint, ViolationSeverity},
+    Dial, Inference, SignalChain,
 };
 
 /// Inference level — discrete categories of reasoning depth.
@@ -49,13 +49,13 @@ impl InferenceLevel {
     pub fn from_dial(dial: Dial) -> Self {
         match dial.position {
             p if p <= 0.05 => InferenceLevel::Formal,
-            p if p <= 0.2  => InferenceLevel::Bathy,
+            p if p <= 0.2 => InferenceLevel::Bathy,
             p if p <= 0.35 => InferenceLevel::Commit,
-            p if p <= 0.5  => InferenceLevel::Analysis,
+            p if p <= 0.5 => InferenceLevel::Analysis,
             p if p <= 0.65 => InferenceLevel::Review,
-            p if p <= 0.8  => InferenceLevel::Extrapolate,
+            p if p <= 0.8 => InferenceLevel::Extrapolate,
             p if p <= 0.95 => InferenceLevel::Creative,
-            _              => InferenceLevel::Exploratory,
+            _ => InferenceLevel::Exploratory,
         }
     }
 
@@ -120,7 +120,12 @@ impl SplineRoom {
         }
     }
 
-    fn evaluate_single(&self, constraint: &SplineConstraint, value: i32, dial: Dial) -> SplineEvaluation {
+    fn evaluate_single(
+        &self,
+        constraint: &SplineConstraint,
+        value: i32,
+        dial: Dial,
+    ) -> SplineEvaluation {
         match constraint.evaluate(value, dial) {
             Ok(curvature) => SplineEvaluation {
                 constraint_name: constraint.name.clone(),
@@ -222,19 +227,29 @@ impl SplineChain {
 
     pub fn spline_room(&mut self, name: &str, dial: Dial) -> &mut SplineRoom {
         if !self.spline_rooms.contains_key(name) {
-            self.spline_rooms.insert(name.to_string(), SplineRoom::new(name, dial));
+            self.spline_rooms
+                .insert(name.to_string(), SplineRoom::new(name, dial));
         }
         self.spline_rooms.get_mut(name).unwrap()
     }
 
-    pub fn add_spline_room(&mut self, name: &str, dial: Dial, constraints: Vec<SplineConstraint>) -> &mut SplineRoom {
+    pub fn add_spline_room(
+        &mut self,
+        name: &str,
+        dial: Dial,
+        constraints: Vec<SplineConstraint>,
+    ) -> &mut SplineRoom {
         let mut room = SplineRoom::new(name, dial);
         room.add_constraints(constraints);
         self.spline_rooms.insert(name.to_string(), room);
         self.spline_rooms.get_mut(name).unwrap()
     }
 
-    pub fn query_spline_room(&self, name: &str, override_dial: Option<Dial>) -> Option<Vec<SplineEvaluation>> {
+    pub fn query_spline_room(
+        &self,
+        name: &str,
+        override_dial: Option<Dial>,
+    ) -> Option<Vec<SplineEvaluation>> {
         self.spline_rooms.get(name).map(|r| r.query(override_dial))
     }
 
@@ -245,7 +260,11 @@ impl SplineChain {
             .collect()
     }
 
-    pub fn push(&mut self, room_name: &str, values: impl IntoIterator<Item = i32>) -> Option<Vec<SplineEvaluation>> {
+    pub fn push(
+        &mut self,
+        room_name: &str,
+        values: impl IntoIterator<Item = i32>,
+    ) -> Option<Vec<SplineEvaluation>> {
         self.spline_rooms.get_mut(room_name).map(|r| {
             r.push_values(values);
             r.query(None)
@@ -299,7 +318,12 @@ mod tests {
         ];
         for (level, expected_pos) in levels {
             let dial = level.to_dial();
-            assert!((dial.position - expected_pos).abs() < 0.01, "level {:?} got {:?}", level, dial.position);
+            assert!(
+                (dial.position - expected_pos).abs() < 0.01,
+                "level {:?} got {:?}",
+                level,
+                dial.position
+            );
             let round_trip = InferenceLevel::from_dial(dial);
             assert_eq!(level, round_trip);
         }

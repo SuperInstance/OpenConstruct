@@ -72,30 +72,25 @@ pub use signal_chain::SignalChain;
 pub use snap::Snap;
 
 // Preset dials for common use cases
-pub use dial::DIAL_FORMAL;
+pub use dial::DIAL_ANALYSIS;
 pub use dial::DIAL_BATHY;
 pub use dial::DIAL_COMMIT;
-pub use dial::DIAL_ANALYSIS;
-pub use dial::DIAL_REVIEW;
-pub use dial::DIAL_EXTRAPOLATE;
 pub use dial::DIAL_CREATIVE;
 pub use dial::DIAL_EXPLORATORY;
+pub use dial::DIAL_EXTRAPOLATE;
+pub use dial::DIAL_FORMAL;
+pub use dial::DIAL_REVIEW;
 
 pub mod constraint;
 pub use constraint::{
-    SplineConstraint, SplineResult, ConstraintViolation, ViolationSeverity,
-    evaluate_spline, maritime_spline,
+    evaluate_spline, maritime_spline, ConstraintViolation, SplineConstraint, SplineResult,
+    ViolationSeverity,
 };
 pub mod spline_connector;
-pub use spline_connector::{
-    SplineRoom, SplineChain, SplineEvaluation,
-};
+pub use spline_connector::{SplineChain, SplineEvaluation, SplineRoom};
 
 pub mod holonomy_bridge;
-pub use holonomy_bridge::{
-    HolonomyRoom, HolonomyChain, HolonomyStatus, BettiResult,
-};
+pub use holonomy_bridge::{BettiResult, HolonomyChain, HolonomyRoom, HolonomyStatus};
 
 pub mod flux_vm_bridge;
 pub use flux_vm_bridge::FluxVmBridge;
-

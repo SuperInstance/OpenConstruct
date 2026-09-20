@@ -8,7 +8,7 @@
 //! Note: Run `cargo bench` from the crate directory, or use:
 //!   cargo bench -p openshell-signal-chain
 
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use openshell_signal_chain::{Dial, Room, SignalChain};
 
 /// Pre-populate a room with snaps and inferences for benchmarking

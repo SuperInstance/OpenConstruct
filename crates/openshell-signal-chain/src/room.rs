@@ -491,7 +491,7 @@ mod tests {
 
         let child = parent.children.get("child").unwrap();
         assert_eq!(child.snaps.len(), 2); // top 2 by confidence
-        // Highest confidence should be first cascaded
+                                          // Highest confidence should be first cascaded
         assert_eq!(child.snaps[0].confidence, 0.95 * 0.8);
         assert_eq!(child.snaps[1].confidence, 0.7 * 0.8);
     }

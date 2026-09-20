@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo bench -p openshell-signal-chain --bench cascade
 
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use openshell_signal_chain::{Room, SignalChain};
 
 /// Build a room tree of given depth and branching factor, with n inferences at the root.

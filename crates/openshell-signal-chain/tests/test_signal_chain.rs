@@ -3,7 +3,9 @@
 
 //! Integration tests for signal-chain.
 
-use openshell_signal_chain::{Dial, Room, SignalChain, DIAL_FORMAL, DIAL_ANALYSIS, SignalChainError};
+use openshell_signal_chain::{
+    Dial, Room, SignalChain, SignalChainError, DIAL_ANALYSIS, DIAL_FORMAL,
+};
 
 #[test]
 fn test_dial_presets() {
@@ -41,13 +43,22 @@ fn test_signal_chain() {
 
     // Drone mapping room
     let drone = chain.room("drone-salvage");
-    drone.add_snap(serde_json::json!({"lat": 45.3, "lon": -122.8, "depth": 87.2}), 1.0);
-    drone.add_inference(serde_json::json!({"hypothesis": "possible anchor at 45.5, -123.0"}), 0.6);
+    drone.add_snap(
+        serde_json::json!({"lat": 45.3, "lon": -122.8, "depth": 87.2}),
+        1.0,
+    );
+    drone.add_inference(
+        serde_json::json!({"hypothesis": "possible anchor at 45.5, -123.0"}),
+        0.6,
+    );
 
     // Formal analysis room
     chain.room_with_dial("formal-proof", Dial::hard());
     let formal = chain.room("formal-proof");
-    formal.add_snap(serde_json::json!({"theorem": "H1_cohomology_detects_emergence"}), 1.0);
+    formal.add_snap(
+        serde_json::json!({"theorem": "H1_cohomology_detects_emergence"}),
+        1.0,
+    );
 
     // Query at different dials
     let all = chain.query_all(DIAL_ANALYSIS);
@@ -58,7 +69,9 @@ fn test_signal_chain() {
 fn test_cascade() {
     // Two sibling rooms in a SignalChain (not parent→child nested hierarchy).
     let mut chain = SignalChain::new("test");
-    chain.room("parent").add_inference(serde_json::json!({"idea": "from_parent"}), 0.8);
+    chain
+        .room("parent")
+        .add_inference(serde_json::json!({"idea": "from_parent"}), 0.8);
 
     // Child starts empty — cascade_from must prove propagation across siblings.
     chain.room("child");
@@ -67,7 +80,11 @@ fn test_cascade() {
     chain.cascade_from("parent", 1);
 
     let child = chain.get_room("child").unwrap();
-    assert_eq!(child.snaps.len(), 1, "cascade_from should inject one snap into sibling");
+    assert_eq!(
+        child.snaps.len(),
+        1,
+        "cascade_from should inject one snap into sibling"
+    );
     let expected = 0.8_f64 * 0.8;
     assert!(
         (child.snaps[0].confidence - expected).abs() < 1e-9,
@@ -82,7 +99,8 @@ fn test_room_child_hierarchy() {
     room.add_inference(serde_json::json!({"level": "parent_inference"}), 0.7);
 
     // Add child
-    room.children.insert("child".to_string(), Room::new("child"));
+    room.children
+        .insert("child".to_string(), Room::new("child"));
 
     room.cascade(1);
 
@@ -96,7 +114,9 @@ fn test_room_child_hierarchy() {
 fn test_empty_room_cascade() {
     // Room with no inferences cascading into children
     let mut parent = Room::new("empty-parent");
-    parent.children.insert("child".to_string(), Room::new("child"));
+    parent
+        .children
+        .insert("child".to_string(), Room::new("child"));
 
     parent.cascade(1);
 
@@ -167,7 +187,9 @@ fn test_cascade_sorts_by_confidence() {
     parent.add_inference(serde_json::json!({"b": 2}), 0.8);
     parent.add_inference(serde_json::json!({"noise": 0}), 0.2); // below 0.5, excluded
 
-    parent.children.insert("child".to_string(), Room::new("child"));
+    parent
+        .children
+        .insert("child".to_string(), Room::new("child"));
     parent.cascade(1);
 
     let child = parent.children.get("child").unwrap();
@@ -180,10 +202,22 @@ fn test_cascade_sorts_by_confidence() {
 
 #[test]
 fn test_try_new_rejects_invalid() {
-    assert!(matches!(Dial::try_new(-0.1), Err(SignalChainError::InvalidDial(_))));
-    assert!(matches!(Dial::try_new(1.1), Err(SignalChainError::InvalidDial(_))));
-    assert!(matches!(Dial::try_new(f64::NAN), Err(SignalChainError::InvalidDial(_))));
-    assert!(matches!(Dial::try_new(f64::INFINITY), Err(SignalChainError::InvalidDial(_))));
+    assert!(matches!(
+        Dial::try_new(-0.1),
+        Err(SignalChainError::InvalidDial(_))
+    ));
+    assert!(matches!(
+        Dial::try_new(1.1),
+        Err(SignalChainError::InvalidDial(_))
+    ));
+    assert!(matches!(
+        Dial::try_new(f64::NAN),
+        Err(SignalChainError::InvalidDial(_))
+    ));
+    assert!(matches!(
+        Dial::try_new(f64::INFINITY),
+        Err(SignalChainError::InvalidDial(_))
+    ));
 }
 
 #[test]

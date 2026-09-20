@@ -25,8 +25,8 @@
 //! assert_eq!(all_results.len(), 2);
 //! ```
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use super::{Dial, Inference, Room, SignalChainError};
 
@@ -145,7 +145,8 @@ impl SignalChain {
     /// ```
     pub fn room(&mut self, name: &str) -> &mut Room {
         if !self.rooms.contains_key(name) {
-            self.rooms.insert(name.to_string(), Room::with_dial(name, self.global_dial));
+            self.rooms
+                .insert(name.to_string(), Room::with_dial(name, self.global_dial));
         }
         self.rooms.get_mut(name).unwrap()
     }
@@ -232,7 +233,8 @@ impl SignalChain {
             return Err(SignalChainError::EmptyName);
         }
         if !self.rooms.contains_key(name) {
-            self.rooms.insert(name.to_string(), Room::with_dial(name, self.global_dial));
+            self.rooms
+                .insert(name.to_string(), Room::with_dial(name, self.global_dial));
         }
         Ok(self.rooms.get_mut(name).unwrap())
     }
@@ -261,7 +263,8 @@ impl SignalChain {
     /// ```
     pub fn room_with_dial(&mut self, name: &str, dial: Dial) -> &mut Room {
         if !self.rooms.contains_key(name) {
-            self.rooms.insert(name.to_string(), Room::with_dial(name, dial));
+            self.rooms
+                .insert(name.to_string(), Room::with_dial(name, dial));
         }
         self.rooms.get_mut(name).unwrap()
     }
@@ -322,7 +325,9 @@ impl SignalChain {
     /// assert_eq!(snaps.len(), 1);
     /// ```
     pub fn cascade_from(&mut self, origin: &str, depth: usize) {
-        if depth == 0 { return; }
+        if depth == 0 {
+            return;
+        }
 
         // Extract top-2 inferences from origin, sorted by confidence descending.
         let top: Vec<(serde_json::Value, f64)> = {
@@ -330,20 +335,28 @@ impl SignalChain {
                 Some(r) => r,
                 None => return,
             };
-            let mut sorted: Vec<&Inference> = room.inferences.iter()
+            let mut sorted: Vec<&Inference> = room
+                .inferences
+                .iter()
                 .filter(|inf| inf.confidence > 0.5)
                 .collect();
             sorted.sort_by(|a, b| {
-                b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal)
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             });
-            sorted.into_iter().take(2)
+            sorted
+                .into_iter()
+                .take(2)
                 .map(|inf| (inf.hypothesis.clone(), inf.confidence))
                 .collect()
         };
 
         // Inject into every sibling room in the chain.
         for (name, room) in &mut self.rooms {
-            if name == origin { continue; }
+            if name == origin {
+                continue;
+            }
             for (hypothesis, confidence) in &top {
                 room.add_snap(hypothesis.clone(), confidence * 0.8);
             }
@@ -401,7 +414,13 @@ mod tests {
         chain.room_with_dial("hard-room", Dial::hard());
         chain.room_with_dial("soft-room", Dial::soft());
 
-        assert_eq!(chain.rooms.get("hard-room").unwrap().dial_position.position, 0.0);
-        assert_eq!(chain.rooms.get("soft-room").unwrap().dial_position.position, 1.0);
+        assert_eq!(
+            chain.rooms.get("hard-room").unwrap().dial_position.position,
+            0.0
+        );
+        assert_eq!(
+            chain.rooms.get("soft-room").unwrap().dial_position.position,
+            1.0
+        );
     }
 }

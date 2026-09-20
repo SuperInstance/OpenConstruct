@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo run --example vm_integration -p openshell-signal-chain
 
-use openshell_signal_chain::{Dial, HolonomyRoom, SignalChain, maritime_spline};
+use openshell_signal_chain::{maritime_spline, Dial, HolonomyRoom, SignalChain};
 
 fn main() {
     println!("=== Signal Chain × Spline × Holonomy Integration ===\n");

@@ -52,5 +52,4 @@ pub enum SignalChainError {
     /// Contains a description of the cycle path.
     #[error("Cascade cycle detected: {0}")]
     CascadeCycle(String),
-
 }

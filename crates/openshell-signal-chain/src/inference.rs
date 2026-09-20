@@ -23,8 +23,8 @@
 //! assert!(inf.confidence >= 0.8);
 //! ```
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 /// A soft extrapolation/hypothesis in a room.
 ///
