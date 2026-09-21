@@ -10,7 +10,7 @@
 //!
 //! Run with: cargo run --example spline_curvature -p openshell-signal-chain
 
-use openshell_signal_chain::{Dial, SplineConstraint, evaluate_spline, maritime_spline};
+use openshell_signal_chain::{evaluate_spline, maritime_spline, Dial, SplineConstraint};
 
 fn main() {
     println!("=== Spline Curvature: Fare Curves of Truth ===\n");
@@ -35,15 +35,27 @@ fn main() {
         match evaluate_spline(&constraints, normal_values, dial) {
             Ok(r) => println!(
                 "  dial={:.1} ({}): PASS — curvature={:.3}, hard_pass={}",
-                dial_pos, 
-                if dial_pos < 0.25 { "hard" } else if dial_pos < 0.75 { "balanced" } else { "soft" },
+                dial_pos,
+                if dial_pos < 0.25 {
+                    "hard"
+                } else if dial_pos < 0.75 {
+                    "balanced"
+                } else {
+                    "soft"
+                },
                 r.total_curvature,
                 r.is_hard_pass
             ),
             Err(v) => println!(
                 "  dial={:.1} ({}): FAIL — {} violation(s)",
                 dial_pos,
-                if dial_pos < 0.25 { "hard" } else if dial_pos < 0.75 { "balanced" } else { "soft" },
+                if dial_pos < 0.25 {
+                    "hard"
+                } else if dial_pos < 0.75 {
+                    "balanced"
+                } else {
+                    "soft"
+                },
                 v.len()
             ),
         }
@@ -79,12 +91,12 @@ fn main() {
 
     // Custom spline: depth sounding
     let depth_spline = SplineConstraint::new(
-        0,     // 0 fathoms (surface)
-        120,   // 120 fathoms (safe working depth)
+        0,   // 0 fathoms (surface)
+        120, // 120 fathoms (safe working depth)
         "depth_fathoms",
-        1.3,   // cost increases sharply near surface (wave action)
-        1.0,   // cost near bottom is moderate
-        0.4,   // neutral zone is deeper (working depth)
+        1.3, // cost increases sharply near surface (wave action)
+        1.0, // cost near bottom is moderate
+        0.4, // neutral zone is deeper (working depth)
     );
 
     println!("Depth spline (neutral zone at 40% of range):");
@@ -98,7 +110,11 @@ fn main() {
             value,
             curvature,
             if hard_result.is_ok() { "PASS" } else { "FAIL" },
-            if soft_result.is_ok() { "ok" } else { "advisory" }
+            if soft_result.is_ok() {
+                "ok"
+            } else {
+                "advisory"
+            }
         );
         if let Err(v) = hard_result {
             print!(" (severity={:?})", v.severity);

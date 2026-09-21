@@ -243,7 +243,10 @@ impl SplineResult {
             self.violations.is_empty()
         } else if dial.position < 0.75 {
             // Balanced mode: warnings only
-            !self.violations.iter().any(|v| v.severity == ViolationSeverity::Critical)
+            !self
+                .violations
+                .iter()
+                .any(|v| v.severity == ViolationSeverity::Critical)
         } else {
             // Soft mode: anything goes
             true

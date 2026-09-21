@@ -23,63 +23,86 @@ fn main() {
 
     // Sonar array — hard sensor data
     let sonar = chain.room("sonar-array");
-    sonar.add_snap(serde_json::json!({
-        "contact": "solid",
-        "bearing": 127.4,
-        "range_m": 200,
-        "depth_m": 87.2
-    }), 1.0);
-    sonar.add_snap(serde_json::json!({
-        "contact": "weak",
-        "bearing": 130.1,
-        "range_m": 350,
-        "depth_m": 92.0
-    }), 0.7);
-    sonar.add_inference(serde_json::json!({
-        "hypothesis": "large metal object at bearing 127-130",
-        "confidence_basis": "two contacts in proximity"
-    }), 0.75);
+    sonar.add_snap(
+        serde_json::json!({
+            "contact": "solid",
+            "bearing": 127.4,
+            "range_m": 200,
+            "depth_m": 87.2
+        }),
+        1.0,
+    );
+    sonar.add_snap(
+        serde_json::json!({
+            "contact": "weak",
+            "bearing": 130.1,
+            "range_m": 350,
+            "depth_m": 92.0
+        }),
+        0.7,
+    );
+    sonar.add_inference(
+        serde_json::json!({
+            "hypothesis": "large metal object at bearing 127-130",
+            "confidence_basis": "two contacts in proximity"
+        }),
+        0.75,
+    );
 
     // Navigation — position and heading facts
     let nav = chain.room("navigation");
-    nav.add_snap(serde_json::json!({
-        "lat": 45.321,
-        "lon": -122.845,
-        "heading_deg": 125.0,
-        "speed_knots": 4.2
-    }), 1.0);
-    nav.add_inference(serde_json::json!({
-        "hypothesis": "current drift: 0.3 kts east",
-        "basis": "GPS vs dead-reckoning delta"
-    }), 0.6);
+    nav.add_snap(
+        serde_json::json!({
+            "lat": 45.321,
+            "lon": -122.845,
+            "heading_deg": 125.0,
+            "speed_knots": 4.2
+        }),
+        1.0,
+    );
+    nav.add_inference(
+        serde_json::json!({
+            "hypothesis": "current drift: 0.3 kts east",
+            "basis": "GPS vs dead-reckoning delta"
+        }),
+        0.6,
+    );
 
     // Analysis — human/ML interpretation (softer)
     chain.room_with_dial("analysis", Dial::new(0.6));
     let analysis = chain.room("analysis");
-    analysis.add_inference(serde_json::json!({
-        "classification": "possible shipwreck",
-        "era_estimate": "early 1900s",
-        "certainty": "moderate"
-    }), 0.65);
-    analysis.add_inference(serde_json::json!({
-        "classification": "natural rock formation",
-        "certainty": "low"
-    }), 0.3);
+    analysis.add_inference(
+        serde_json::json!({
+            "classification": "possible shipwreck",
+            "era_estimate": "early 1900s",
+            "certainty": "moderate"
+        }),
+        0.65,
+    );
+    analysis.add_inference(
+        serde_json::json!({
+            "classification": "natural rock formation",
+            "certainty": "low"
+        }),
+        0.3,
+    );
 
     // Formal proof room — only hard facts
     chain.room_with_dial("formal-proofs", Dial::hard());
     let proofs = chain.room("formal-proofs");
-    proofs.add_snap(serde_json::json!({
-        "theorem": "drift_detected",
-        "proof": "sonar_variance > threshold(3σ)"
-    }), 1.0);
+    proofs.add_snap(
+        serde_json::json!({
+            "theorem": "drift_detected",
+            "proof": "sonar_variance > threshold(3σ)"
+        }),
+        1.0,
+    );
 
     // 3. Set up hierarchy: analysis room has sub-rooms
     let analysis_room = chain.room("analysis");
-    analysis_room.children.insert(
-        "classification".to_string(),
-        Room::new("classification"),
-    );
+    analysis_room
+        .children
+        .insert("classification".to_string(), Room::new("classification"));
     analysis_room.children.insert(
         "historical-context".to_string(),
         Room::new("historical-context"),
@@ -103,10 +126,10 @@ fn main() {
         );
         for (child_name, child) in &room.children {
             println!(
-            "    └─ {} (snaps={}, inferences={})",
-            child_name,
-            child.snaps.len(),
-            child.inferences.len(),
+                "    └─ {} (snaps={}, inferences={})",
+                child_name,
+                child.snaps.len(),
+                child.inferences.len(),
             );
         }
     }

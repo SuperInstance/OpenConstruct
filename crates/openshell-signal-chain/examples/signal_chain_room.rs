@@ -28,7 +28,10 @@ fn main() {
     let mut bathy_room = Room::with_dial("bathy-data", DIAL_BATHY);
     bathy_room.add_absolute(serde_json::json!({"depth": 250.5, "sensor": "multibeam"}));
     bathy_room.add_inference(serde_json::json!({"seabed_type": "sand"}), 0.7);
-    println!("  Room dial position: {:.1}", bathy_room.dial_position.position);
+    println!(
+        "  Room dial position: {:.1}",
+        bathy_room.dial_position.position
+    );
 
     // 3. SignalChain with multiple rooms
     println!("\n--- 3. SignalChain ---");
@@ -65,8 +68,12 @@ fn main() {
     println!("\n--- 4. Room Traversal ---");
     let rooms = chain.traverse(&["navigation", "catch-log", "weather"]);
     for room in rooms {
-        println!("  Traversed: {} (snaps: {}, inferences: {})",
-            room.name, room.snaps.len(), room.inferences.len());
+        println!(
+            "  Traversed: {} (snaps: {}, inferences: {})",
+            room.name,
+            room.snaps.len(),
+            room.inferences.len()
+        );
     }
 
     // 5. Cascade demonstration
@@ -103,14 +110,23 @@ fn main() {
     // 6. Room metadata
     println!("\n--- 6. Room Metadata ---");
     let mut meta_room = Room::new("annotated");
-    meta_room.metadata.insert("vessel".to_string(), serde_json::json!("MSC-Seeker"));
-    meta_room.metadata.insert("captain".to_string(), serde_json::json!("Ng"));
-    meta_room.metadata.insert("date".to_string(), serde_json::json!("2026-05-20"));
+    meta_room
+        .metadata
+        .insert("vessel".to_string(), serde_json::json!("MSC-Seeker"));
+    meta_room
+        .metadata
+        .insert("captain".to_string(), serde_json::json!("Ng"));
+    meta_room
+        .metadata
+        .insert("date".to_string(), serde_json::json!("2026-05-20"));
     meta_room.add_snap(serde_json::json!({"catch": "tuna"}), 1.0);
 
     println!("  Metadata: {:?}", meta_room.metadata);
-    println!("  Room complete: {} with {} snaps",
-        meta_room.name, meta_room.snaps.len());
+    println!(
+        "  Room complete: {} with {} snaps",
+        meta_room.name,
+        meta_room.snaps.len()
+    );
 
     println!("\n=== Done ===");
 }

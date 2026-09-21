@@ -23,8 +23,8 @@
 //! assert_eq!(snap.confidence, 1.0);
 //! ```
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 /// A hard-locked fact in a room.
 ///

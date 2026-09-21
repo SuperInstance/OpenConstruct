@@ -12,28 +12,40 @@ fn main() {
 
     // 1. Create a room and add snaps (hard facts)
     let mut room = Room::new("sonar-readings");
-    room.add_snap(serde_json::json!({
-        "type": "depth",
-        "value": 42.5,
-        "unit": "meters"
-    }), 1.0);
-    room.add_snap(serde_json::json!({
-        "type": "temperature",
-        "value": 12.3,
-        "unit": "celsius"
-    }), 1.0);
+    room.add_snap(
+        serde_json::json!({
+            "type": "depth",
+            "value": 42.5,
+            "unit": "meters"
+        }),
+        1.0,
+    );
+    room.add_snap(
+        serde_json::json!({
+            "type": "temperature",
+            "value": 12.3,
+            "unit": "celsius"
+        }),
+        1.0,
+    );
 
     // 2. Add inferences (soft extrapolations)
-    room.add_inference(serde_json::json!({
-        "type": "prediction",
-        "hypothesis": "depth will decrease",
-        "delta": -2.1
-    }), 0.75);
-    room.add_inference(serde_json::json!({
-        "type": "speculation",
-        "hypothesis": "fish school detected nearby",
-        "confidence_signal": 0.3
-    }), 0.3);
+    room.add_inference(
+        serde_json::json!({
+            "type": "prediction",
+            "hypothesis": "depth will decrease",
+            "delta": -2.1
+        }),
+        0.75,
+    );
+    room.add_inference(
+        serde_json::json!({
+            "type": "speculation",
+            "hypothesis": "fish school detected nearby",
+            "confidence_signal": 0.3
+        }),
+        0.3,
+    );
 
     // 3. Query at different dial levels
     println!("--- Dial: HARD (0.0) ---");
@@ -64,11 +76,26 @@ fn main() {
 
     // 4. Use preset dials
     println!("\n--- Using Preset Dials ---");
-    println!("  DIAL_FORMAL (formal reasoning): position = {:.1}", openshell_signal_chain::DIAL_FORMAL.position);
-    println!("  DIAL_BATHY (bathymetric data):  position = {:.1}", openshell_signal_chain::DIAL_BATHY.position);
-    println!("  DIAL_COMMIT (git history):      position = {:.1}", openshell_signal_chain::DIAL_COMMIT.position);
-    println!("  DIAL_REVIEW (balanced):         position = {:.1}", openshell_signal_chain::DIAL_REVIEW.position);
-    println!("  DIAL_CREATIVE (generative):     position = {:.1}", openshell_signal_chain::DIAL_CREATIVE.position);
+    println!(
+        "  DIAL_FORMAL (formal reasoning): position = {:.1}",
+        openshell_signal_chain::DIAL_FORMAL.position
+    );
+    println!(
+        "  DIAL_BATHY (bathymetric data):  position = {:.1}",
+        openshell_signal_chain::DIAL_BATHY.position
+    );
+    println!(
+        "  DIAL_COMMIT (git history):      position = {:.1}",
+        openshell_signal_chain::DIAL_COMMIT.position
+    );
+    println!(
+        "  DIAL_REVIEW (balanced):         position = {:.1}",
+        openshell_signal_chain::DIAL_REVIEW.position
+    );
+    println!(
+        "  DIAL_CREATIVE (generative):     position = {:.1}",
+        openshell_signal_chain::DIAL_CREATIVE.position
+    );
 
     // 5. Query snaps and inferences separately
     println!("\n--- Separate Queries ---");
@@ -76,7 +103,11 @@ fn main() {
     println!("  Snaps only ({}): {:?}", snaps.len(), snaps);
 
     let inferences = room.query_inferences(Dial::new(0.5));
-    println!("  Inferences at 0.5 ({}): {:?}", inferences.len(), inferences);
+    println!(
+        "  Inferences at 0.5 ({}): {:?}",
+        inferences.len(),
+        inferences
+    );
 
     // 6. Demonstrate threshold checking
     println!("\n--- Inference Threshold Demo ---");
